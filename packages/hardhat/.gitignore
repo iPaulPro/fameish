@@ -1,0 +1,44 @@
+# dependencies
+node_modules
+
+# env files
+.env
+.env.local
+
+# coverage
+coverage
+coverage.json
+
+# typechain
+typechain
+typechain-types
+
+# hardhat files
+cache
+cache-zk
+artifacts
+artifacts-zk
+
+# hardhat-dependency-compiler
+contracts/hardhat-dependency-compiler
+
+# zkSync files
+artifacts-zk
+cache-zk
+
+# deployments
+deployments/localhost
+deployments-zk/localhost
+
+# other
+temp
+
+# lens
+deployed_primitives.txt
+deployed_rules.txt
+
+# hardhat-zksync-node
+era_test_node.log
+
+addressBook.json
+contracts.env
