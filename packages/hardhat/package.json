@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "deploy": "hardhat deploy-zksync"
   },
   "keywords": [],
   "author": "",
@@ -12,8 +14,7 @@
   "packageManager": "pnpm@10.6.2",
   "dependencies": {
     "@typechain/ethers-v6": "^0.5.1",
-    "dotenv": "^16.5.0",
-    "path": "^0.12.7"
+    "dotenv": "^16.5.0"
   },
   "devDependencies": {
     "@ethereum-waffle/mock-contract": "^4.0.4",
@@ -30,6 +31,7 @@
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
     "@nomicfoundation/hardhat-ethers": "^3.0.8",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
+    "@openzeppelin/contracts": "^4.9.6",
     "@openzeppelin/contracts-upgradeable": "^4.9.6",
     "@openzeppelin/hardhat-upgrades": "^3.9.0",
     "@typechain/hardhat": "^9.1.0",

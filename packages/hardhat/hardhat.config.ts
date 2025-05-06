@@ -1,10 +1,5 @@
 import * as dotenv from "dotenv";
-import path from "path";
-
-const envFileName =
-  !process.env.NODE_ENV || process.env.NODE_ENV === "production" ? ".env" : `.env.${process.env.NODE_ENV}`;
-const envFile = path.resolve(process.cwd(), envFileName);
-dotenv.config({ path: envFile });
+dotenv.config();
 
 import "@matterlabs/hardhat-zksync";
 import "@openzeppelin/hardhat-upgrades";
@@ -24,14 +19,14 @@ const config: HardhatUserConfig = {
     version: "latest",
     settings: {},
   },
-  defaultNetwork: "localhost",
+  defaultNetwork: "inMemoryNode",
   networks: {
     // View the networks that are pre-configured.
     // If the network you are looking for is not here you can add new network settings
     hardhat: {
       zksync: true,
     },
-    localhost: {
+    inMemoryNode: {
       url: "http://127.0.0.1:8011",
       ethNetwork: "localhost", // in-memory node doesn't support eth node; removing this line will cause an error
       zksync: true,

@@ -39,6 +39,9 @@ deployed_rules.txt
 
 # hardhat-zksync-node
 era_test_node.log
+anvil-zksync.log
 
 addressBook.json
 contracts.env
+
+deployments-zk/inMemoryNode
