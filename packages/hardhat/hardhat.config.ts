@@ -17,7 +17,9 @@ const config: HardhatUserConfig = {
   },
   zksolc: {
     version: "latest",
-    settings: {},
+    settings: {
+      codegen: "yul"
+    },
   },
   defaultNetwork: "inMemoryNode",
   networks: {
