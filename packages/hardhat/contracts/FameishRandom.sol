@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+contract FameishRandom {
+    event RandomNumberGenerated(uint256 randomNumber);
 
-contract FameishRandom is Ownable {
     uint256 private _nonce;
 
     /// @notice Returns a pseudo‑random number in [min, max].
     /// @param min The lower bound (inclusive)
     /// @param max The upper bound (inclusive)
-    function randomInRange(uint256 min, uint256 max)
-    external
-    onlyOwner
-    returns (uint256)
-    {
+    function randomInRange(
+        uint256 min,
+        uint256 max
+    ) external returns (uint256) {
         require(max > min, "FameishRandom: max must be > min");
 
         // entropy sources:
@@ -38,6 +37,9 @@ contract FameishRandom is Ownable {
         // map down into the desired range
         uint256 range = max - min + 1;
         uint256 result = (entropy % range) + min;
+
+        emit RandomNumberGenerated(result);
+
         return result;
     }
 }

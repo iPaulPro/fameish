@@ -9,7 +9,13 @@ import "@typechain/hardhat";
 
 import { HardhatUserConfig } from "hardhat/config";
 
-const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
+// If not set, it uses the hardhat account 0 private key.
+const deployerPrivateKey =
+  process.env.DEPLOYER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+
+// If not set, it uses the hardhat account 1 private key.
+export const accountManagerPrivateKey =
+  process.env.ACCOUNT_MANAGER_PRIVATE_KEY ?? "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -18,7 +24,7 @@ const config: HardhatUserConfig = {
   zksolc: {
     version: "latest",
     settings: {
-      codegen: "yul"
+      codegen: "yul",
     },
   },
   defaultNetwork: "inMemoryNode",
@@ -32,14 +38,14 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8011",
       ethNetwork: "localhost", // in-memory node doesn't support eth node; removing this line will cause an error
       zksync: true,
-      ...(deployerPrivateKey ? { accounts: [deployerPrivateKey] } : {}),
+      accounts: [deployerPrivateKey, accountManagerPrivateKey],
     },
     lensTestnet: {
-      url: 'https://rpc.testnet.lens.dev',
+      url: "https://rpc.testnet.lens.dev",
       chainId: 37111,
       zksync: true,
-      ethNetwork: 'sepolia',
-      verifyURL: 'https://api-explorer-verify.staging.lens.zksync.dev/contract_verification',
+      ethNetwork: "sepolia",
+      verifyURL: "https://api-explorer-verify.staging.lens.zksync.dev/contract_verification",
       enableVerifyURL: true,
     },
     lensMainnet: {
@@ -49,7 +55,7 @@ const config: HardhatUserConfig = {
       verifyURL: "https://api-explorer-verify.lens.matterhosted.dev/contract_verification",
       enableVerifyURL: true,
     },
-  }
+  },
 };
 
 export default config;
