@@ -1,103 +1,104 @@
-import Image from "next/image";
+"use client";
+
+import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import CountUp from "@/components/CountUp";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="gradient-bg font-sans min-h-screen relative overflow-hidden flex flex-col">
+      <header className="px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
+        <span className="font-damion text-4xl">Fameish</span>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <nav className="hidden md:flex items-center space-x-8">
+          <Link href="#" className="text-gray-700 hover:text-black">
+            How it works
+          </Link>
+          <Link href="#" className="text-gray-700 hover:text-black">
+            Terms of service
+          </Link>
+        </nav>
+
+        <div className="flex items-center justify-end gap-x-6">
+          <Link href="/login" className="font-medium">
+            Log in
+          </Link>
+          <Link href="/signup" className="hidden md:block bg-black text-white px-6 py-2 rounded-full font-medium">
+            Sign up
+          </Link>
+        </div>
+      </header>
+
+      <main className="container flex-grow mx-auto px-4 pt-16 md:pt-28 relative flex flex-col">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto pb-8 md:pb-12">
+          <h1 className="text-3xl md:text-[4rem] lg:text-[4.5rem] xl:text-[5rem] font-medium leading-10 md:leading-20 tracking-tighter mb-8 text-balance">
+            Become the most-followed person on Lens, for a day
+          </h1>
+
+          <Button size="lg" className="w-fit text-lg !ps-12 !pe-10 !py-8 rounded-full font-bold">
+            Sign up
+            <ChevronRight strokeWidth={4} className="signup-icon ml-2 h-5 w-5 scale-x-200 text-accent" />
+          </Button>
+
+          <div className="text-sm opacity-65 text-center pt-4">It's totally free to join and use.</div>
+        </div>
+        <div className="flex-grow flex flex-col justify-end items-center">
+          <div className="bg-background w-full max-w-3xl rounded-t-3xl shadow-xl flex flex-col items-center px-6 py-8 md:py-12 gap-2">
+            <div className="flex flex-col items-center gap-2">
+              <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
+              <AnimatedCountdownClock
+                targetDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
+                onComplete={() => alert("done!")}
+              />
+            </div>
+
+            <div className="text-lg opacity-45 font-medium pt-2">Today's winner</div>
+
+            <div className="flex flex-col items-center gap-1">
+              <Avatar className="w-36 h-36">
+                <AvatarImage src="dummy_profile_photo.jpeg" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+              <div className="flex gap-2">
+                <span className="font-bold">Kai Mercer</span>
+                <span className="opacity-65">@VibeCrafter</span>
+              </div>
+            </div>
+
+            <div className="flex items-center bg-accent rounded-full h-12">
+              <span className="bg-neutral-100 rounded-full h-full px-6 flex items-center font-medium">
+                Followers gained
+              </span>
+              <CountUp to={32496} duration={3} className="font-bold pl-4 pr-6" />
+            </div>
+          </div>
+        </div>
+        <div
+          className="hidden md:block floating absolute md:top-[24rem] md:left-0 lg:top-96 lg:left-12
+             xl:top-96 xl:left-40 2xl:left-80"
+        >
+          <div className="w-32 h-32 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg -rotate-6">
+            <img src="/dummy_profile_photo-1.jpeg" alt="Profile" className="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div
+          className="hidden md:block floating delay absolute md:top-[30rem] md:right-0 lg:top-[30rem] lg:right-16
+             xl:top-[30rem] xl:right-48 2xl:right-80"
+        >
+          <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
+            <img src="/dummy_profile_photo-2.jpeg" alt="Profile" className="w-full h-full object-cover" />
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <div className="hidden md:block absolute bottom-4 right-4 gap-2 opacity-65">
+        <div className="flex items-center">
+          <span className="font-medium">Built on</span>
+          <img src="/lens-logo.svg" className="h-5 inline ml-2" alt="Lens logo" />
+        </div>
+      </div>
     </div>
   );
 }
