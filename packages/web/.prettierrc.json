@@ -1,7 +1,16 @@
 {
+  "plugins": ["prettier-plugin-sql"],
   "arrowParens": "avoid",
   "printWidth": 120,
   "tabWidth": 2,
   "trailingComma": "all",
-  "importOrderSortSpecifiers": true
+  "overrides": [
+    {
+      "files": "*.sql",
+      "options": {
+        "language": "postgresql",
+        "keywordCase": "upper"
+      }
+    }
+  ]
 }
