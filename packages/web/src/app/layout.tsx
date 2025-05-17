@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto, Geist_Mono, Damion, Martian_Mono } from "next/font/google";
 import "./globals.css";
+import Providers from "@/app/providers";
 
 const robotoSans = Roboto({
   variable: "--font-roboto-sans",
@@ -37,7 +38,7 @@ export default function RootLayout({
       <body
         className={`${robotoSans.variable} ${geistMono.variable} ${damion.variable} ${limelight.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
