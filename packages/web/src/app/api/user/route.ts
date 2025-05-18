@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     // Check if the user already exists
     const userQuery = supabase.from("user").select().ilike("account", accountAddress);
     const { data: userData } = await userQuery;
-    if (userData) {
+    if (userData?.length) {
       return new Response("Account already exists", {
         status: 409,
       });
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
 
     console.log("POST /user : ✓ New user verified");
 
-    const fameishAccount = await publicClient.readContract({
+    const winnerAccount = await publicClient.readContract({
       address: process.env.FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
       abi: fameishAbi,
       functionName: "fameishAccount",
@@ -117,13 +117,13 @@ export async function POST(req: Request) {
     const isFollowing = await publicClient.multicall({
       contracts: [
         {
-          address: getContract("GraphImpl").address,
+          address: getContract("LensGlobalGraph").address,
           abi: graphApi,
           functionName: "isFollowing",
-          args: [accountAddress, fameishAccount],
+          args: [accountAddress, winnerAccount],
         },
         {
-          address: getContract("GraphImpl").address,
+          address: getContract("LensGlobalGraph").address,
           abi: graphApi,
           functionName: "isFollowing",
           args: [accountAddress, process.env.LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`],
@@ -148,8 +148,10 @@ export async function POST(req: Request) {
     console.log("POST /user : ✓ Following status verified");
 
     // create a new user
-    const { data: insertData, error: insertError } = await supabase.from("user").insert({ account: accountAddress });
-    console.log("POST /user : insertData", insertData);
+    const { data: insertData, error: insertError } = await supabase
+      .from("user")
+      .insert({ account: accountAddress })
+      .select();
 
     if (insertError) {
       console.error("POST /user : insertError", insertError);
@@ -160,7 +162,7 @@ export async function POST(req: Request) {
 
     console.log("POST /user : ✓ Created user");
 
-    return Response.json({ success: true, user: insertData });
+    return Response.json({ success: true, user: insertData[0] });
   } catch (e) {
     console.error("POST /user error", e);
     return new Response("Unauthorized", {
