@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ReactNode } from "react";
 import { Roboto, Geist_Mono, Damion, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/app/providers";
@@ -16,11 +17,13 @@ const geistMono = Geist_Mono({
 const damion = Damion({
   weight: "400",
   variable: "--font-damion",
+  subsets: ["latin"],
 });
 
 const limelight = Martian_Mono({
   weight: "400",
   variable: "--font-limelight",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -31,7 +34,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">

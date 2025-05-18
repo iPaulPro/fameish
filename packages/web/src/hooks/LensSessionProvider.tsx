@@ -1,0 +1,322 @@
+import { createContext, FC, ReactNode, useContext, useEffect, useState } from "react";
+import { useAccount, useWalletClient } from "wagmi";
+import { useModal } from "connectkit";
+import {
+  Account,
+  AccountAvailable,
+  AuthenticatedUser,
+  evmAddress,
+  PublicClient,
+  SessionClient,
+  useAuthenticatedUser,
+  useLogin,
+  useLogout,
+  useSessionClient,
+  mainnet,
+  testnet,
+} from "@lens-protocol/react";
+import { fetchAccount, fetchAccountsAvailable } from "@lens-protocol/client/actions";
+
+interface LensSessionContextType {
+  /**
+   * The connected wallet address
+   */
+  address: `0x${string}` | undefined;
+
+  /**
+   * The authenticated Lens user
+   */
+  lensUser: AuthenticatedUser | undefined | null;
+
+  /**
+   * The Lens account for the authenticated user
+   */
+  account: Account | null;
+
+  /**
+   * A list of Lens accounts owned or managed by the authenticated user
+   */
+  accountsAvailable: AccountAvailable[];
+
+  /**
+   * The Lens session client
+   */
+  client: SessionClient | null | undefined;
+
+  /**
+   * Whether the session is loading
+   */
+  isLoading: boolean;
+
+  /**
+   * An error that occurred during the session lifecycle
+   */
+  error: Error | null;
+
+  /**
+   * Open the ConnectKit modal to connect a wallet
+   */
+  connectWallet: () => void;
+
+  /**
+   * Open the ConnectKit modal to disconnect the wallet
+   */
+  disconnectWallet: () => void;
+
+  /**
+   * Authenticate with Lens Protocol
+   * @param accountAvailable The account to authenticate returned from @lens-protocol/client/actions#fetchAccountsAvailable
+   */
+  logIn: (accountAvailable: AccountAvailable) => Promise<void>;
+
+  /**
+   * End the Lens session
+   */
+  logOut: () => Promise<void>;
+
+  /**
+   * Fetch account data and available Lens accounts
+   */
+  refresh: () => Promise<void>;
+}
+
+const LensSessionContext = createContext<LensSessionContextType | undefined>(undefined);
+
+interface LensSessionProviderProps {
+  children: ReactNode;
+}
+
+const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [accountsAvailable, setAccountsAvailable] = useState<AccountAvailable[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const { data: walletClient } = useWalletClient();
+  const { address, isConnecting } = useAccount();
+  const { setOpen: setConnectModalOpen } = useModal();
+
+  const { execute: executeLogin, loading: loginLoading, error: loginError } = useLogin();
+  const { execute: executeLogout, loading: logoutLoading, error: logoutError } = useLogout();
+  const { data: sessionClient, loading: sessionLoading, error: sessionError } = useSessionClient();
+  const { data: lensUser } = useAuthenticatedUser();
+
+  const lensClient = PublicClient.create({
+    environment: process.env.NEXT_PUBLIC_USE_TESTNET ? testnet : mainnet,
+  });
+
+  useEffect(() => {
+    if (isLoading || account || !lensUser) return;
+    updateAccount().catch(e => {
+      console.error("Error fetching account:", e);
+      setError(e);
+    });
+  }, [isLoading, lensUser, account]);
+
+  useEffect(() => {
+    updateAccountsAvailable(address).catch(e => {
+      console.error("Error fetching available accounts:", e);
+      setError(e);
+    });
+  }, [address]);
+
+  useEffect(() => {
+    setIsLoading(isConnecting || loginLoading || sessionLoading || logoutLoading);
+  }, [isConnecting, loginLoading, sessionLoading, logoutLoading]);
+
+  useEffect(() => {
+    if (loginError) {
+      setError(loginError);
+    } else if (sessionError) {
+      setError(sessionError);
+    } else if (logoutError) {
+      setError(logoutError);
+    }
+  }, [loginError, sessionError, logoutError]);
+
+  useEffect(() => {
+    if (!isLoading && address && walletClient && accountsAvailable.length && !lensUser) {
+      // TODO add account selection
+      logIn(accountsAvailable[0]).catch(setError);
+    }
+  }, [isLoading, address, walletClient, lensUser, accountsAvailable]);
+
+  const connectWallet = () => {
+    setConnectModalOpen(true);
+  };
+
+  const disconnectWallet = () => {
+    setConnectModalOpen(true);
+  };
+
+  const logIn = async (accountAvailable: AccountAvailable) => {
+    setIsLoading(true);
+
+    if (sessionClient?.isSessionClient()) {
+      const switchResult = await sessionClient.switchAccount({
+        account: accountAvailable.account.address,
+      });
+      if (switchResult.isOk()) {
+        const accountResult = await fetchAccount(sessionClient, {
+          address: accountAvailable.account.address,
+        });
+        if (accountResult.isOk() && accountResult.value) {
+          setAccount(accountResult.value);
+        } else {
+          setAccount(accountAvailable.account);
+        }
+        return;
+      }
+    }
+
+    if (!walletClient || !address) {
+      console.error("No wallet available");
+      setError(new Error("No wallet available"));
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await executeLogin({
+        ...(accountAvailable.__typename === "AccountManaged"
+          ? {
+              accountManager: {
+                manager: evmAddress(address),
+                account: evmAddress(accountAvailable.account.address),
+                app: process.env.LENS_FAMEISH_APP_ADDRESS,
+              },
+            }
+          : {
+              accountOwner: {
+                owner: evmAddress(address),
+                account: evmAddress(accountAvailable.account.address),
+                app: process.env.LENS_FAMEISH_APP_ADDRESS,
+              },
+            }),
+        signMessage: async (message: string) => {
+          return walletClient.signMessage({ account: address, message });
+        },
+      });
+
+      if (result.isErr()) {
+        console.error("Login error:", result.error);
+        throw result.error;
+      }
+
+      const accountResult = await fetchAccount(lensClient, {
+        address: accountAvailable.account.address,
+      });
+      if (accountResult.isOk() && accountResult.value) {
+        setAccount(accountResult.value);
+      } else {
+        setAccount(accountAvailable.account);
+      }
+
+      setError(null);
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error instanceof Error) {
+        setError(error);
+      } else {
+        setError(new Error("Login failed"));
+      }
+    } finally {
+      setIsLoading(false);
+      // sleep for 5 seconds
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  };
+
+  const logOut = async () => {
+    const logoutRes = await executeLogout();
+    if (logoutRes.isErr()) {
+      setError(logoutRes.error);
+      console.error("Logout error:", logoutRes.error);
+      window.localStorage.clear();
+    }
+    setAccount(null);
+    setAccountsAvailable([]);
+  };
+
+  const updateAccount = async () => {
+    if (!lensUser) return;
+    const accountResult = await fetchAccount(lensClient, {
+      address: lensUser.address,
+    });
+    if (accountResult.isErr()) {
+      console.error("Error fetching account", accountResult.error);
+      setError(new Error("Error fetching account"));
+      return;
+    }
+    setAccount(accountResult.value);
+  };
+
+  const updateAccountsAvailable = async (address: string | undefined = lensUser?.signer) => {
+    if (!address) {
+      setAccountsAvailable([]);
+      return;
+    }
+
+    const accountsRes = await fetchAccountsAvailable(lensClient, {
+      managedBy: evmAddress(address),
+    });
+
+    if (accountsRes.isErr()) {
+      setError(new Error("Error fetching managed accounts"));
+      setAccountsAvailable([]);
+      console.error("Error fetching managed accounts");
+      return;
+    }
+
+    const accounts = accountsRes.value;
+    if (!accounts?.items) {
+      setError(new Error("No accounts available"));
+      setAccountsAvailable([]);
+      console.error("No accounts available");
+      return;
+    }
+
+    setAccountsAvailable([...accounts.items]);
+  };
+
+  const refresh = async () => {
+    if (!address) return;
+    setIsLoading(true);
+    await updateAccount();
+    await updateAccountsAvailable();
+    setIsLoading(false);
+  };
+
+  return (
+    <>
+      <LensSessionContext.Provider
+        value={{
+          address,
+          lensUser,
+          account,
+          accountsAvailable,
+          client: sessionClient,
+          isLoading,
+          error,
+          connectWallet,
+          disconnectWallet,
+          logIn,
+          logOut,
+          refresh,
+        }}
+      >
+        {children}
+      </LensSessionContext.Provider>
+    </>
+  );
+};
+
+const useLensSession = (): LensSessionContextType => {
+  const context = useContext(LensSessionContext);
+  if (!context) {
+    throw new Error("useLens must be used within a LensSessionProvider");
+  }
+  return context;
+};
+
+export { LensSessionProvider, useLensSession };

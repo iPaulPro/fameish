@@ -2,5 +2,5 @@ import { PublicClient, mainnet, testnet } from "@lens-protocol/react";
 
 export const lensClient = PublicClient.create({
   environment: process.env.NEXT_PUBLIC_USE_TESTNET ? testnet : mainnet,
-  storage: window.localStorage,
+  ...(typeof window !== "undefined" ? { storage: window.localStorage } : {}),
 });
