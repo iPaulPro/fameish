@@ -17,11 +17,12 @@ import linkAnimation from "@/lib/anim/anim_link.json";
 import usersAnimation from "@/lib/anim/anim_users.json";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LuArrowRight, LuKey, LuLoader } from "react-icons/lu";
+import { LuArrowRight, LuKey, LuLoader, LuShieldBan } from "react-icons/lu";
 import { FaUserCircle } from "react-icons/fa";
 import config from "@/src/config";
 import { CiUser } from "react-icons/ci";
 import { useRouter } from "next/navigation";
+import Header from "@/components/Header";
 
 function ConnectWalletSection() {
   const { connectWallet } = useLensSession();
@@ -71,7 +72,7 @@ function LensAccountChooserSection() {
   };
 
   return (
-    <ScrollArea className="w-3/4 h-72 rounded-xl border bg-background">
+    <ScrollArea className=" w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
       <div className="flex flex-col divide-y">
         {accountsAvailable
           .map(aa => aa.account)
@@ -99,6 +100,8 @@ function LensAccountChooserSection() {
               </div>
               {isLoggingIn && selectedAddress == account.address ? (
                 <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
+              ) : account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!) ? (
+                <LuShieldBan className="flex-none w-4 h-4" />
               ) : (
                 <LuArrowRight className="flex-none opacity-45 w-4 h-4" />
               )}
@@ -285,12 +288,12 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 pt-8">
+    <div className="flex flex-col items-center gap-2 pt-8">
       <Button
         size="xl"
         disabled={isSubmitting}
         onClick={handleCreateUser}
-        className="flex items-center justify-center gap-2"
+        className="w-fit flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
           <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
@@ -327,6 +330,8 @@ export default function Signup() {
 
   const { walletAddress, isLoading, lensUser, accountsAvailable } = useLensSession();
 
+  const router = useRouter();
+
   const supabase = createSupabaseClient();
 
   const getUser = async (accountAddress: EvmAddress) => {
@@ -340,34 +345,43 @@ export default function Signup() {
     getUser(lensUser.address).then(setUser);
   }, [lensUser]);
 
+  useEffect(() => {
+    if (user) {
+      router.push("/account");
+    }
+  }, [user]);
+
   return (
-    <div className="w-full h-full flex justify-center items-center">
-      <div className="bg-background rounded-2xl shadow-xl w-full p-6 md:p-0 max-w-4xl grid md:grid-cols-12 items-center overflow-hidden">
-        <div className="h-full md:col-span-5 flex items-center justify-center px-6 md:from-neutral-50 md:bg-gradient-to-l order-2 md:order-1 rounded-l-xl md:border-r md:border-neutral-100">
-          {canExecuteTransactions && lensUser ? (
-            <CreateUserSection accountAddress={lensUser.address} />
-          ) : lensUser ? (
-            <AddAccountManagerSection
-              accountAddress={lensUser.address}
-              setCanExecuteTransactions={setCanExecuteTransactions}
-            />
-          ) : walletAddress ? (
-            <LensAccountChooserSection />
-          ) : (
-            <ConnectWalletSection />
-          )}
-        </div>
-        <div className="md:min-h-96 md:col-span-7 py-6 md:p-12 order-1 md:order-2">
-          <div className="flex flex-col justify-center gap-2">
-            {canExecuteTransactions ? (
-              <CreateUserMessage />
-            ) : lensUser?.address ? (
-              <AddAccountManagerMessage />
+    <div className="w-full h-full flex flex-col">
+      <Header />
+      <div className="flex-grow w-full h-full flex justify-center items-center -mt-10">
+        <div className="bg-background rounded-2xl shadow-xl w-full max-w-4xl grid md:grid-cols-12 items-center overflow-hidden">
+          <div className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-6 from-neutral-50 bg-gradient-to-l order-2 md:order-1 rounded-l-xl border-t md:border-r border-neutral-100">
+            {canExecuteTransactions && lensUser ? (
+              <CreateUserSection accountAddress={lensUser.address} />
+            ) : lensUser ? (
+              <AddAccountManagerSection
+                accountAddress={lensUser.address}
+                setCanExecuteTransactions={setCanExecuteTransactions}
+              />
             ) : walletAddress ? (
-              <LensAccountChooserMessage />
+              <LensAccountChooserSection />
             ) : (
-              <ConnectWalletMessage />
+              <ConnectWalletSection />
             )}
+          </div>
+          <div className="md:min-h-96 md:col-span-7 p-6 md:p-12 order-1 md:order-2">
+            <div className="flex flex-col justify-center gap-2">
+              {canExecuteTransactions ? (
+                <CreateUserMessage />
+              ) : lensUser?.address ? (
+                <AddAccountManagerMessage />
+              ) : walletAddress ? (
+                <LensAccountChooserMessage />
+              ) : (
+                <ConnectWalletMessage />
+              )}
+            </div>
           </div>
         </div>
       </div>

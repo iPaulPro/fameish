@@ -2,6 +2,10 @@ import { createWalletClient, http } from "viem";
 import config from "@/src/config";
 import { privateKeyToAccount } from "viem/accounts";
 
+if (typeof window !== "undefined") {
+  throw new Error("This file should not be imported in the browser");
+}
+
 const CHAIN_NAME = process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? "sepolia" : "mainnet";
 
 const accountManagerAccount = privateKeyToAccount(process.env.LENS_ACCOUNT_MANAGER_PRIVATE_KEY! as `0x${string}`);

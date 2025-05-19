@@ -114,7 +114,7 @@ export async function POST(req: Request) {
     const winnerAccount = await publicClient.readContract({
       address: process.env.FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
       abi: fameishAbi,
-      functionName: "fameishAccount",
+      functionName: "winner",
     });
 
     const isFollowing = await publicClient.multicall({

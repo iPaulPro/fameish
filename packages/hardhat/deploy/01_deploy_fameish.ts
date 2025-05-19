@@ -3,8 +3,8 @@ import { Deployer } from "@matterlabs/hardhat-zksync";
 import { verifyZkDeployedContract, loadAddressBook, saveContractToAddressBook } from "../lib/utils";
 import { accountManagerPrivateKey } from "../hardhat.config";
 
-const deployFameishManager = async function (hre: HardhatRuntimeEnvironment) {
-  console.log('Starting deployment process of "FameishManager"...');
+const deployFameish = async function (hre: HardhatRuntimeEnvironment) {
+  console.log('Starting deployment process of "Fameish"...');
   const wallet = await hre.deployer.getWallet(0);
   const deployer = new Deployer(hre, wallet);
   const addressBook = loadAddressBook();
@@ -28,13 +28,13 @@ const deployFameishManager = async function (hre: HardhatRuntimeEnvironment) {
     throw new Error("FameishRandom address not found in address book or environment variable");
   }
 
-  const artifact = await deployer.loadArtifact("FameishManager");
+  const artifact = await deployer.loadArtifact("Fameish");
   const contract = await deployer.deploy(artifact, [accountManagerAddress, lensGraphAddress, fameishRandomAddress]);
   const address = await contract.getAddress();
-  console.log("FameishManager deployed to:", address);
+  console.log("Fameish deployed to:", address);
 
   saveContractToAddressBook({
-    contractName: "FameishManager",
+    contractName: "Fameish",
     address,
   });
 
@@ -47,6 +47,6 @@ const deployFameishManager = async function (hre: HardhatRuntimeEnvironment) {
   }
 };
 
-export default deployFameishManager;
+export default deployFameish;
 
-deployFameishManager.tags = ["FameishManager"];
+deployFameish.tags = ["Fameish"];

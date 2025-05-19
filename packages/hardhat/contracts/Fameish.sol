@@ -7,13 +7,13 @@ import {Graph} from "lens-modules/contracts/core/primitives/graph/Graph.sol";
 import {FameishRandom} from "./FameishRandom.sol";
 import {RuleChange, RuleProcessingParams, KeyValue} from "lens-modules/contracts/core/types/Types.sol";
 
-contract FameishManager is AccessControl {
+contract Fameish is AccessControl {
     event RandomIndexSelected(
         uint256 indexed randomIndex,
         string followerListURI,
         uint256 followerCount
     );
-    event FameishAccountSet(address indexed fameishAccount);
+    event WinnerSet(address indexed winner);
 
     error InvalidConstructorParams();
     error InvalidAccountParams();
@@ -23,10 +23,11 @@ contract FameishManager is AccessControl {
     Graph public lensGraph;
     FameishRandom public fameishRandom;
 
-    address public fameishAccount;
+    address public winner;
     uint256 public followerIndex;
     uint256 public followerCount;
     string public followerListURI;
+    uint256 public winnerSetTimestamp;
 
     mapping(address account => uint256 totalFollows) public totalFollows;
     mapping(address account => uint256 totalUnfollows) public totalUnfollows;
@@ -66,16 +67,15 @@ contract FameishManager is AccessControl {
         return followerIndex;
     }
 
-    function setFameishAccount(
-        address _fameishAccount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_fameishAccount == address(0)) {
+    function setWinner(address _winner) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_winner == address(0)) {
             revert InvalidAccountParams();
         }
-        fameishAccount = _fameishAccount;
-        totalFollows[_fameishAccount] = 0;
-        totalUnfollows[_fameishAccount] = 0;
-        emit FameishAccountSet(_fameishAccount);
+        winner = _winner;
+        totalFollows[_winner] = 0;
+        totalUnfollows[_winner] = 0;
+        winnerSetTimestamp = block.timestamp;
+        emit WinnerSet(_winner);
     }
 
     function bulkFollow(
@@ -97,7 +97,7 @@ contract FameishManager is AccessControl {
             bytes memory followData = abi.encodeWithSelector(
                 lensGraph.follow.selector,
                 follower,
-                fameishAccount,
+                winner,
                 customParams,
                 graphRulesProcessingParams,
                 followRulesProcessingParams,
@@ -113,7 +113,7 @@ contract FameishManager is AccessControl {
 
             (bool success, ) = follower.delegatecall(executeData);
             if (success) {
-                totalFollows[fameishAccount]++;
+                totalFollows[winner]++;
             }
         }
     }
@@ -132,7 +132,7 @@ contract FameishManager is AccessControl {
             bytes memory data = abi.encodeWithSelector(
                 lensGraph.unfollow.selector,
                 followerAccount,
-                fameishAccount,
+                winner,
                 customParams,
                 graphRulesProcessingParams
             );
@@ -141,7 +141,7 @@ contract FameishManager is AccessControl {
             try
                 account.executeTransaction(address(lensGraph), 0, data)
             returns (bytes memory) {
-                totalUnfollows[fameishAccount]++;
+                totalUnfollows[winner]++;
             } catch {
                 // Continue execution even if the call fails.
             }

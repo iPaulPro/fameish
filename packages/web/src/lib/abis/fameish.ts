@@ -35,19 +35,6 @@ export const fameishAbi = [
     inputs: [
       {
         indexed: true,
-        internalType: "address",
-        name: "fameishAccount",
-        type: "address",
-      },
-    ],
-    name: "FameishAccountSet",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
         internalType: "uint256",
         name: "randomIndex",
         type: "uint256",
@@ -144,6 +131,19 @@ export const fameishAbi = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "winner",
+        type: "address",
+      },
+    ],
+    name: "WinnerSet",
+    type: "event",
+  },
+  {
     inputs: [],
     name: "ACCOUNT_MANAGER",
     outputs: [
@@ -193,19 +193,6 @@ export const fameishAbi = [
     name: "bulkUnfollow",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "fameishAccount",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -398,11 +385,11 @@ export const fameishAbi = [
     inputs: [
       {
         internalType: "address",
-        name: "_fameishAccount",
+        name: "_winner",
         type: "address",
       },
     ],
-    name: "setFameishAccount",
+    name: "setWinner",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -458,6 +445,32 @@ export const fameishAbi = [
       {
         internalType: "uint256",
         name: "totalUnfollows",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "winner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "winnerSetTimestamp",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
         type: "uint256",
       },
     ],

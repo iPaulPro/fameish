@@ -6,49 +6,13 @@ import { LuChevronRight } from "react-icons/lu";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CountUp from "@/components/CountUp";
-import { useLensSession } from "@/hooks/LensSessionProvider";
 import { cn } from "@/lib/utils";
+import Header from "@/components/Header";
 
 export default function Home() {
-  const { walletAddress, lensUser } = useLensSession();
-
   return (
     <div className="relative overflow-hidden flex flex-col">
-      <header className="px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
-        <span className="font-damion text-4xl">Fameish</span>
-
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link href="#" className="text-gray-700 hover:text-black">
-            How it works
-          </Link>
-          <Link href="#" className="text-gray-700 hover:text-black">
-            Terms of service
-          </Link>
-        </nav>
-
-        <div className="flex items-center justify-end gap-x-6">
-          {lensUser ? (
-            <Link href="/account" className="font-medium">
-              Account
-            </Link>
-          ) : (
-            <Link href="/login" className="font-medium">
-              Log in
-            </Link>
-          )}
-          {!walletAddress && (
-            <Link
-              href="/signup"
-              className={cn(
-                buttonVariants({ variant: "default", size: "lg" }),
-                "hidden md:block bg-black text-white px-6 py-2 rounded-full font-medium",
-              )}
-            >
-              Sign up
-            </Link>
-          )}
-        </div>
-      </header>
+      <Header showLinks={true} />
 
       <main className="container flex-grow mx-auto px-4 pt-16 md:pt-28 relative flex flex-col">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto pb-8 md:pb-12">
@@ -83,7 +47,7 @@ export default function Home() {
 
             <div className="flex flex-col items-center gap-1">
               <Avatar className="w-36 h-36">
-                <AvatarImage src="dummy_profile_photo.jpeg" />
+                <AvatarImage src="/images/dummy_profile_photo.jpeg" />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
               <div className="flex gap-2">
@@ -105,7 +69,7 @@ export default function Home() {
              xl:top-96 xl:left-40 2xl:left-80"
         >
           <div className="w-32 h-32 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg -rotate-6">
-            <img src="/dummy_profile_photo-1.jpeg" alt="Profile" className="w-full h-full object-cover" />
+            <img src="/images/dummy_profile_photo-1.jpeg" alt="Profile" className="w-full h-full object-cover" />
           </div>
         </div>
         <div
@@ -113,14 +77,14 @@ export default function Home() {
              xl:top-[30rem] xl:right-48 2xl:right-80"
         >
           <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
-            <img src="/dummy_profile_photo-2.jpeg" alt="Profile" className="w-full h-full object-cover" />
+            <img src="/images/dummy_profile_photo-2.jpeg" alt="Profile" className="w-full h-full object-cover" />
           </div>
         </div>
       </main>
       <div className="hidden md:block absolute bottom-4 right-4 gap-2 opacity-65">
         <div className="flex items-center">
           <span className="font-medium">Built on</span>
-          <img src="/lens-logo.svg" className="h-5 inline ml-2" alt="Lens logo" />
+          <img src="/images/lens-logo.svg" className="h-5 inline ml-2" alt="Lens logo" />
         </div>
       </div>
     </div>
