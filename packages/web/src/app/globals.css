@@ -127,6 +127,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  a {
+    @apply font-semibold hover:underline;
+  }
 }
 
 .gradient-bg {

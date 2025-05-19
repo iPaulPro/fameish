@@ -2,14 +2,18 @@
 
 import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LuChevronRight } from "react-icons/lu";
+import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CountUp from "@/components/CountUp";
+import { useLensSession } from "@/hooks/LensSessionProvider";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
+  const { walletAddress, lensUser } = useLensSession();
+
   return (
-    <div className="gradient-bg font-sans min-h-screen relative overflow-hidden flex flex-col">
+    <div className="relative overflow-hidden flex flex-col">
       <header className="px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
         <span className="font-damion text-4xl">Fameish</span>
 
@@ -23,12 +27,26 @@ export default function Home() {
         </nav>
 
         <div className="flex items-center justify-end gap-x-6">
-          <Link href="/login" className="font-medium">
-            Log in
-          </Link>
-          <Link href="/signup" className="hidden md:block bg-black text-white px-6 py-2 rounded-full font-medium">
-            Sign up
-          </Link>
+          {lensUser ? (
+            <Link href="/account" className="font-medium">
+              Account
+            </Link>
+          ) : (
+            <Link href="/login" className="font-medium">
+              Log in
+            </Link>
+          )}
+          {!walletAddress && (
+            <Link
+              href="/signup"
+              className={cn(
+                buttonVariants({ variant: "default", size: "lg" }),
+                "hidden md:block bg-black text-white px-6 py-2 rounded-full font-medium",
+              )}
+            >
+              Sign up
+            </Link>
+          )}
         </div>
       </header>
 
@@ -38,10 +56,16 @@ export default function Home() {
             Become the most-followed person on Lens, for a day
           </h1>
 
-          <Button size="lg" className="w-fit text-lg !ps-12 !pe-10 !py-8 rounded-full font-bold">
+          <Link
+            href="/signup"
+            className={cn(
+              buttonVariants({ variant: "default", size: "lg" }),
+              "w-fit text-lg !ps-12 !pe-10 !py-8 rounded-full font-bold",
+            )}
+          >
             Sign up
-            <ChevronRight strokeWidth={4} className="signup-icon ml-2 h-5 w-5 scale-x-200 text-accent" />
-          </Button>
+            <LuChevronRight strokeWidth={4} className="signup-icon ml-2 h-5 w-5 scale-x-200 text-accent" />
+          </Link>
 
           <div className="text-sm opacity-65 text-center pt-4">It's totally free to join and use.</div>
         </div>
@@ -72,7 +96,7 @@ export default function Home() {
               <span className="bg-neutral-100 rounded-full h-full px-6 flex items-center font-medium">
                 Followers gained
               </span>
-              <CountUp to={32496} duration={3} className="font-bold pl-4 pr-6" />
+              <CountUp to={32496} duration={3} className="font-bold pl-4 pr-6" separator="," />
             </div>
           </div>
         </div>

@@ -7,6 +7,9 @@ import { getContract } from "@/lib/lens/contracts";
 import { fameishAbi } from "@/lib/abis/fameish";
 import { fetchAccount } from "@lens-protocol/client/actions";
 import { lensClient } from "@/lib/lens/server";
+import { encodeFunctionData } from "viem";
+import { walletClient } from "@/lib/viem/walletClient";
+import { privateKeyToAccount } from "viem/accounts";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 
@@ -51,7 +54,7 @@ export async function POST(req: Request) {
       });
     }
     const account = getAccountRes.value;
-    if (!account || account.score < Number(process.env.LENS_MIN_ACCOUNT_SCORE!)) {
+    if (!account || account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!)) {
       return new Response("Account score is too low", {
         status: 401,
       });
@@ -78,7 +81,7 @@ export async function POST(req: Request) {
           address: accountAddress,
           abi: accountAbi,
           functionName: "canExecuteTransactions",
-          args: [process.env.LENS_ACCOUNT_MANAGER_ADDRESS! as `0x${string}`],
+          args: [process.env.NEXT_PUBLIC_LENS_ACCOUNT_MANAGER_ADDRESS! as `0x${string}`],
         },
       ],
     });
@@ -98,9 +101,9 @@ export async function POST(req: Request) {
     console.log("POST /user : ✓ Account managers verified");
 
     // Check if the user already exists
-    const userQuery = supabase.from("user").select().ilike("account", accountAddress);
+    const userQuery = supabase.from("user").select().ilike("account", accountAddress).single();
     const { data: userData } = await userQuery;
-    if (userData?.length) {
+    if (userData) {
       return new Response("Account already exists", {
         status: 409,
       });
@@ -126,23 +129,72 @@ export async function POST(req: Request) {
           address: getContract("LensGlobalGraph").address,
           abi: graphApi,
           functionName: "isFollowing",
-          args: [accountAddress, process.env.LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`],
+          args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`],
         },
       ],
     });
 
-    // Check if the account is following the winning account
-    if (isFollowing[0].error || !isFollowing[0].result) {
-      return new Response("Not following winner", {
-        status: 401,
+    if (isFollowing[0].error || isFollowing[1].error) {
+      return new Response("Unable to get follow status", {
+        status: 500,
       });
     }
 
-    // Check if the account is the Fameish account
-    if (isFollowing[1].error || !isFollowing[1].result) {
-      return new Response("Not following Fameish account", {
-        status: 401,
+    const followCalls: {
+      target: `0x${string}`;
+      value: bigint;
+      data: `0x${string}`;
+    }[] = [];
+
+    // Ensure the account is following the winning account
+    if (!isFollowing[0].result) {
+      const followWinnerData = encodeFunctionData({
+        abi: graphApi,
+        functionName: "follow",
+        args: [accountAddress, winnerAccount, [], [], [], []],
       });
+      followCalls.push({
+        target: getContract("LensGlobalGraph").address,
+        value: 0n,
+        data: followWinnerData,
+      });
+    }
+
+    // Ensure the account is following the Fameish account
+    if (!isFollowing[1].result) {
+      const followFameishData = encodeFunctionData({
+        abi: graphApi,
+        functionName: "follow",
+        args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`, [], [], [], []],
+      });
+      followCalls.push({
+        target: getContract("LensGlobalGraph").address,
+        value: 0n,
+        data: followFameishData,
+      });
+    }
+
+    console.log("executeTransactions with client", walletClient.account.address);
+
+    if (followCalls.length) {
+      try {
+        const accountManagerAccount = privateKeyToAccount(
+          process.env.LENS_ACCOUNT_MANAGER_PRIVATE_KEY! as `0x${string}`,
+        );
+        const { request } = await publicClient.simulateContract({
+          account: accountManagerAccount,
+          address: accountAddress,
+          abi: accountAbi,
+          functionName: "executeTransactions",
+          args: [followCalls],
+        });
+        await walletClient.writeContract(request);
+      } catch (e) {
+        console.error(e);
+        return new Response("Failed to follow accounts", {
+          status: 500,
+        });
+      }
     }
 
     console.log("POST /user : ✓ Following status verified");
@@ -151,7 +203,8 @@ export async function POST(req: Request) {
     const { data: insertData, error: insertError } = await supabase
       .from("user")
       .insert({ account: accountAddress })
-      .select();
+      .select()
+      .single();
 
     if (insertError) {
       console.error("POST /user : insertError", insertError);
@@ -162,7 +215,7 @@ export async function POST(req: Request) {
 
     console.log("POST /user : ✓ Created user");
 
-    return Response.json({ success: true, user: insertData[0] });
+    return Response.json({ success: true, user: insertData });
   } catch (e) {
     console.error("POST /user error", e);
     return new Response("Unauthorized", {

@@ -1,5 +1,5 @@
 export const getContract = (contractName: string) => {
-  const contracts = process.env.NEXT_PUBLIC_USE_TESTNET ? LensContracts.testnet : LensContracts.mainnet;
+  const contracts = process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? LensContracts.testnet : LensContracts.mainnet;
   const contract = contracts[contractName as keyof typeof contracts];
   if (!contract) {
     throw new Error(`Contract ${contractName} not found`);

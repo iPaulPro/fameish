@@ -16,12 +16,13 @@ import {
   testnet,
 } from "@lens-protocol/react";
 import { fetchAccount, fetchAccountsAvailable } from "@lens-protocol/client/actions";
+import config from "@/src/config";
 
 interface LensSessionContextType {
   /**
    * The connected wallet address
    */
-  address: `0x${string}` | undefined;
+  walletAddress: `0x${string}` | undefined;
 
   /**
    * The authenticated Lens user
@@ -65,9 +66,9 @@ interface LensSessionContextType {
 
   /**
    * Authenticate with Lens Protocol
-   * @param accountAvailable The account to authenticate returned from @lens-protocol/client/actions#fetchAccountsAvailable
+   * @param account The account to authenticate with
    */
-  logIn: (accountAvailable: AccountAvailable) => Promise<void>;
+  logIn: (account: Account) => Promise<void>;
 
   /**
    * End the Lens session
@@ -92,8 +93,10 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const { data: walletClient } = useWalletClient();
-  const { address, isConnecting } = useAccount();
+  const { data: walletClient } = useWalletClient({
+    chainId: config.lens.chain.id,
+  });
+  const { address: walletAddress, isConnecting } = useAccount();
   const { setOpen: setConnectModalOpen } = useModal();
 
   const { execute: executeLogin, loading: loginLoading, error: loginError } = useLogin();
@@ -102,7 +105,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   const { data: lensUser } = useAuthenticatedUser();
 
   const lensClient = PublicClient.create({
-    environment: process.env.NEXT_PUBLIC_USE_TESTNET ? testnet : mainnet,
+    environment: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? testnet : mainnet,
   });
 
   useEffect(() => {
@@ -114,11 +117,11 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   }, [isLoading, lensUser, account]);
 
   useEffect(() => {
-    updateAccountsAvailable(address).catch(e => {
+    updateAccountsAvailable(walletAddress).catch(e => {
       console.error("Error fetching available accounts:", e);
       setError(e);
     });
-  }, [address]);
+  }, [walletAddress]);
 
   useEffect(() => {
     setIsLoading(isConnecting || loginLoading || sessionLoading || logoutLoading);
@@ -134,13 +137,6 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
     }
   }, [loginError, sessionError, logoutError]);
 
-  useEffect(() => {
-    if (!isLoading && address && walletClient && accountsAvailable.length && !lensUser) {
-      // TODO add account selection
-      logIn(accountsAvailable[0]).catch(setError);
-    }
-  }, [isLoading, address, walletClient, lensUser, accountsAvailable]);
-
   const connectWallet = () => {
     setConnectModalOpen(true);
   };
@@ -149,27 +145,27 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
     setConnectModalOpen(true);
   };
 
-  const logIn = async (accountAvailable: AccountAvailable) => {
+  const logIn = async (account: Account) => {
     setIsLoading(true);
 
     if (sessionClient?.isSessionClient()) {
       const switchResult = await sessionClient.switchAccount({
-        account: accountAvailable.account.address,
+        account: account.address,
       });
       if (switchResult.isOk()) {
         const accountResult = await fetchAccount(sessionClient, {
-          address: accountAvailable.account.address,
+          address: account.address,
         });
         if (accountResult.isOk() && accountResult.value) {
           setAccount(accountResult.value);
         } else {
-          setAccount(accountAvailable.account);
+          setAccount(account);
         }
         return;
       }
     }
 
-    if (!walletClient || !address) {
+    if (!walletClient || !walletAddress) {
       console.error("No wallet available");
       setError(new Error("No wallet available"));
       setIsLoading(false);
@@ -178,23 +174,23 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
 
     try {
       const result = await executeLogin({
-        ...(accountAvailable.__typename === "AccountManaged"
+        ...(account.owner === walletAddress
           ? {
-              accountManager: {
-                manager: evmAddress(address),
-                account: evmAddress(accountAvailable.account.address),
-                app: process.env.LENS_FAMEISH_APP_ADDRESS,
+              accountOwner: {
+                owner: evmAddress(walletAddress),
+                account: evmAddress(account.address),
+                app: process.env.NEXT_PUBLIC_LENS_FAMEISH_APP_ADDRESS,
               },
             }
           : {
-              accountOwner: {
-                owner: evmAddress(address),
-                account: evmAddress(accountAvailable.account.address),
-                app: process.env.LENS_FAMEISH_APP_ADDRESS,
+              accountManager: {
+                manager: evmAddress(walletAddress),
+                account: evmAddress(account.address),
+                app: process.env.NEXT_PUBLIC_LENS_FAMEISH_APP_ADDRESS,
               },
             }),
         signMessage: async (message: string) => {
-          return walletClient.signMessage({ account: address, message });
+          return walletClient.signMessage({ account: walletAddress, message });
         },
       });
 
@@ -204,12 +200,12 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
       }
 
       const accountResult = await fetchAccount(lensClient, {
-        address: accountAvailable.account.address,
+        address: account.address,
       });
       if (accountResult.isOk() && accountResult.value) {
         setAccount(accountResult.value);
       } else {
-        setAccount(accountAvailable.account);
+        setAccount(account);
       }
 
       setError(null);
@@ -280,7 +276,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   };
 
   const refresh = async () => {
-    if (!address) return;
+    if (!walletAddress) return;
     setIsLoading(true);
     await updateAccount();
     await updateAccountsAvailable();
@@ -291,7 +287,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
     <>
       <LensSessionContext.Provider
         value={{
-          address,
+          walletAddress,
           lensUser,
           account,
           accountsAvailable,

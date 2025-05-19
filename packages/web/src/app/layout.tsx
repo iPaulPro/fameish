@@ -41,7 +41,9 @@ export default function RootLayout({
       <body
         className={`${robotoSans.variable} ${geistMono.variable} ${damion.variable} ${limelight.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <div className="w-full h-screen gradient-bg font-sans">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );
