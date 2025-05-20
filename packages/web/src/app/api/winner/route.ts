@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       functionName: "winner",
     });
     console.log("GET /winner: current winner", currentWinner);
-  } catch (e) {
+  } catch {
     // there may not be a winner set yet
   }
 
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
         const unfollowTx = await walletClient.writeContract(unfollow);
         console.log("GET /winner: unfollow", account, unfollowTx);
         await walletClient.waitForTransactionReceipt({ hash: unfollowTx });
-      } catch (e) {
+      } catch {
         // console.error("GET /winner : error", e);
       }
 
@@ -190,7 +190,7 @@ export async function GET(request: Request) {
       const followTx = await walletClient.writeContract(follow);
       console.log("GET /winner: follow", account, followTx);
       await walletClient.waitForTransactionReceipt({ hash: followTx });
-    } catch (e) {
+    } catch {
       // console.error("GET /winner : error", e);
     }
 

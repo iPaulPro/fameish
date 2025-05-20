@@ -31,7 +31,7 @@ export default function Home() {
             <LuChevronRight strokeWidth={4} className="signup-icon ml-2 h-5 w-5 scale-x-200 text-accent" />
           </Link>
 
-          <div className="text-sm opacity-65 text-center pt-4">It's totally free to join and use.</div>
+          <div className="text-sm opacity-65 text-center pt-4">It&apos;s totally free to join and use.</div>
         </div>
         <div className="flex-grow flex flex-col justify-end items-center">
           <div className="bg-background w-full max-w-3xl rounded-t-3xl shadow-xl flex flex-col items-center px-6 py-8 md:py-12 gap-2">
@@ -43,7 +43,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="text-lg opacity-45 font-medium pt-2">Today's winner</div>
+            <div className="text-lg opacity-45 font-medium pt-2">Today&apos;s winner</div>
 
             <div className="flex flex-col items-center gap-1">
               <Avatar className="w-36 h-36">

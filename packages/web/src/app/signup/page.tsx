@@ -138,10 +138,10 @@ function AddAccountManagerSection({
   accountAddress: EvmAddress;
   setCanExecuteTransactions: Dispatch<SetStateAction<boolean>>;
 }) {
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { client, lensUser } = useLensSession();
+  const { client } = useLensSession();
   const { data: walletClient } = useWalletClient({
     chainId: config.lens.chain.id,
   });
@@ -237,7 +237,7 @@ function AddAccountManagerMessage() {
 }
 
 function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { client } = useLensSession();
@@ -320,7 +320,7 @@ function CreateUserMessage() {
       </div>
       <span className="text-2xl font-medium">All set!</span>
       <span className="text-base opacity-65 pr-6">
-        Creating your account will trigger a follow of today's winner and the{" "}
+        Creating your account will trigger a follow of today&apos;s winner and the{" "}
         <span className="font-semibold">@fameish</span> accounts, and make you eligible to win!
       </span>
     </>
@@ -331,7 +331,7 @@ export default function Signup() {
   const [user, setUser] = useState<User | null>(null);
   const [canExecuteTransactions, setCanExecuteTransactions] = useState<boolean>(false);
 
-  const { walletAddress, isLoading, lensUser, accountsAvailable } = useLensSession();
+  const { walletAddress, lensUser } = useLensSession();
 
   const router = useRouter();
 
