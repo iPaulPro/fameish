@@ -46,7 +46,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "ethers": "^6.13.7",
     "hardhat": "2.22.19",
-    "lens-modules": "file:../../../lens-modules",
+    "lens-modules": "^3.0.0",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.3",
     "ts-node": "^10.9.1",
