@@ -1,4 +1,4 @@
-export const graphApi = [
+export const graphAbi = [
   {
     type: "constructor",
     inputs: [],

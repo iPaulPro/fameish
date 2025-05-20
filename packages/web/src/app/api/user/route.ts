@@ -2,7 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import supabase from "@/lib/supabase/admin";
 import publicClient from "@/lib/viem/publicClient";
 import { accountAbi } from "@/lib/abis/account";
-import { graphApi } from "@/lib/abis/graph";
+import { graphAbi } from "@/lib/abis/graph";
 import { getContract } from "@/lib/lens/contracts";
 import { fameishAbi } from "@/lib/abis/fameish";
 import { fetchAccount } from "@lens-protocol/client/actions";
@@ -121,13 +121,13 @@ export async function POST(req: Request) {
       contracts: [
         {
           address: getContract("LensGlobalGraph").address,
-          abi: graphApi,
+          abi: graphAbi,
           functionName: "isFollowing",
           args: [accountAddress, winnerAccount],
         },
         {
           address: getContract("LensGlobalGraph").address,
-          abi: graphApi,
+          abi: graphAbi,
           functionName: "isFollowing",
           args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`],
         },
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
     // Ensure the account is following the winning account
     if (!isFollowing[0].result) {
       const followWinnerData = encodeFunctionData({
-        abi: graphApi,
+        abi: graphAbi,
         functionName: "follow",
         args: [accountAddress, winnerAccount, [], [], [], []],
       });
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
     // Ensure the account is following the Fameish account
     if (!isFollowing[1].result) {
       const followFameishData = encodeFunctionData({
-        abi: graphApi,
+        abi: graphAbi,
         functionName: "follow",
         args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`, [], [], [], []],
       });

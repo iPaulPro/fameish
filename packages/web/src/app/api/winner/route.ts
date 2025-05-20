@@ -7,6 +7,10 @@ import { privateKeyToAccount } from "viem/accounts";
 import { fameishAbi } from "@/lib/abis/fameish";
 import { lensClient } from "@/lib/lens/server";
 import { EvmAddress } from "@lens-protocol/client";
+import { graphAbi } from "@/lib/abis/graph";
+import { getContract } from "@/lib/lens/contracts";
+import { encodeFunctionData } from "viem";
+import { accountAbi } from "@/lib/abis/account";
 
 export const maxDuration = 60; // This function can run for a maximum of 60 seconds
 
@@ -50,25 +54,32 @@ export async function GET(request: Request) {
     // there may not be a winner set yet
   }
 
-  if (currentWinner !== ZeroAddress) {
+  if (currentWinner && currentWinner !== ZeroAddress) {
     const accountsForUnfollow = data.filter(row => row.should_unfollow).map(row => row.account as `0x${string}`);
     console.log("GET /winner : ", accountsForUnfollow.length, "accounts for unfollow");
 
-    for (let i = 0; i < accountsForUnfollow.length; i += 50) {
-      const batch = accountsForUnfollow.slice(i, i + 50);
+    for (let i = 0; i < accountsForUnfollow.length; i++) {
+      const account = accountsForUnfollow[i];
+      console.log("GET /winner : unfollowing winner with account", account);
 
       try {
-        const { request: bulkUnfollow } = await walletClient.simulateContract({
-          address: fameishAddress,
-          abi: fameishAbi,
-          functionName: "bulkUnfollow",
-          args: [batch],
+        const unfollowWinnerData = encodeFunctionData({
+          abi: graphAbi,
+          functionName: "unfollow",
+          args: [account, currentWinner, [], []],
         });
-        const bulkUnfollowTx = await walletClient.writeContract(bulkUnfollow);
-        console.log("GET /winner: bulk unfollow", i, "-", i + 50, bulkUnfollowTx);
-        await walletClient.waitForTransactionReceipt({ hash: bulkUnfollowTx });
+        const graphContractAddress = getContract("LensGlobalGraph").address;
+        const { request: unfollow } = await walletClient.simulateContract({
+          address: account,
+          abi: accountAbi,
+          functionName: "executeTransaction",
+          args: [graphContractAddress, 0n, unfollowWinnerData],
+        });
+        const unfollowTx = await walletClient.writeContract(unfollow);
+        console.log("GET /winner: unfollow", account, unfollowTx);
+        await walletClient.waitForTransactionReceipt({ hash: unfollowTx });
       } catch (e) {
-        console.error("GET /winner : error", e);
+        // console.error("GET /winner : error", e);
       }
 
       await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
@@ -159,22 +170,28 @@ export async function GET(request: Request) {
 
   console.log("GET /winner : following winner with", notFollowing.length, "accounts...");
 
-  for (let i = 0; i < notFollowing.length; i += 50) {
-    const batch = notFollowing.slice(i, i + 50);
-    console.log("GET /winner : following winner with batch", batch);
+  for (let i = 0; i < notFollowing.length; i++) {
+    const account = notFollowing[i];
+    console.log("GET /winner : following winner with account", account);
 
     try {
-      const { request: bulkFollow } = await walletClient.simulateContract({
-        address: fameishAddress,
-        abi: fameishAbi,
-        functionName: "bulkFollow",
-        args: [batch],
+      const followWinnerData = encodeFunctionData({
+        abi: graphAbi,
+        functionName: "follow",
+        args: [account, winnerAccount, [], [], [], []],
       });
-      const bulkFollowTx = await walletClient.writeContract(bulkFollow);
-      console.log("GET /winner: bulk follow", i, "-", i + 50, bulkFollowTx);
-      await walletClient.waitForTransactionReceipt({ hash: bulkFollowTx });
+      const graphContractAddress = getContract("LensGlobalGraph").address;
+      const { request: follow } = await walletClient.simulateContract({
+        address: account,
+        abi: accountAbi,
+        functionName: "executeTransaction",
+        args: [graphContractAddress, 0n, followWinnerData],
+      });
+      const followTx = await walletClient.writeContract(follow);
+      console.log("GET /winner: follow", account, followTx);
+      await walletClient.waitForTransactionReceipt({ hash: followTx });
     } catch (e) {
-      console.error("GET /winner : error", e);
+      // console.error("GET /winner : error", e);
     }
 
     await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
