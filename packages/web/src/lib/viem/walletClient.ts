@@ -1,4 +1,4 @@
-import { createWalletClient, http } from "viem";
+import { createWalletClient, http, publicActions } from "viem";
 import config from "@/src/config";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -14,4 +14,4 @@ export const walletClient = createWalletClient({
   chain: config.lens.chain,
   transport: http(`https://lens-${CHAIN_NAME}.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`),
   account: accountManagerAccount,
-});
+}).extend(publicActions);

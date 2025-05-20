@@ -60,20 +60,23 @@ export type Database = {
         Row: {
           account: string
           created_at: string
-          eligible: boolean | null
+          eligible: boolean
           id: number
+          should_unfollow: boolean
         }
         Insert: {
           account: string
           created_at?: string
-          eligible?: boolean | null
+          eligible?: boolean
           id?: number
+          should_unfollow?: boolean
         }
         Update: {
           account?: string
           created_at?: string
-          eligible?: boolean | null
+          eligible?: boolean
           id?: number
+          should_unfollow?: boolean
         }
         Relationships: []
       }

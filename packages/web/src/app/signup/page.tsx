@@ -15,6 +15,7 @@ import Lottie from "lottie-react";
 import registerAnimation from "@/lib/anim/anim_register.json";
 import linkAnimation from "@/lib/anim/anim_link.json";
 import usersAnimation from "@/lib/anim/anim_users.json";
+import moonwalkAnimation from "@/lib/anim/anim_moonwalk.json";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LuArrowRight, LuKey, LuLoader, LuShieldBan } from "react-icons/lu";
@@ -44,8 +45,10 @@ function ConnectWalletSection() {
 
 function ConnectWalletMessage() {
   return (
-    <div className="w-full h-80 flex flex-col items-center justify-center">
-      <span className="font-damion text-6xl pb-6">Fameish</span>
+    <div className="w-full h-72 flex flex-col items-center justify-center">
+      <div className="flex justify-center pb-2">
+        <Lottie animationData={usersAnimation} className="w-24 h-24" />
+      </div>
       <span className="text-2xl font-medium pb-2">Every day, one user is chosen to be followed by all other users</span>
       <span className="text-base opacity-65 pr-6">The winner is automatically followed and unfollowed for you.</span>
     </div>
@@ -313,7 +316,7 @@ function CreateUserMessage() {
   return (
     <>
       <div className="flex justify-center pb-2">
-        <Lottie animationData={usersAnimation} className="w-24 h-24" />
+        <Lottie animationData={moonwalkAnimation} className="w-24 h-24" />
       </div>
       <span className="text-2xl font-medium">All set!</span>
       <span className="text-base opacity-65 pr-6">
@@ -335,7 +338,7 @@ export default function Signup() {
   const supabase = createSupabaseClient();
 
   const getUser = async (accountAddress: EvmAddress) => {
-    const userQuery = supabase.from("user").select().ilike("account", accountAddress).single();
+    const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
     const { data } = await userQuery;
     return data as User;
   };

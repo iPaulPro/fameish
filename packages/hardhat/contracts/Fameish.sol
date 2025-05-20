@@ -122,28 +122,31 @@ contract Fameish is AccessControl {
         address payable[] calldata _followers
     ) external onlyRole(ACCOUNT_MANAGER) {
         for (uint256 i = 0; i < _followers.length; i++) {
-            address payable followerAccount = _followers[i];
+            address payable follower = _followers[i];
             KeyValue[] memory customParams = new KeyValue[](0);
             RuleProcessingParams[]
                 memory graphRulesProcessingParams = new RuleProcessingParams[](
                     0
                 );
 
-            bytes memory data = abi.encodeWithSelector(
+            bytes memory unfollowData = abi.encodeWithSelector(
                 lensGraph.unfollow.selector,
-                followerAccount,
+                follower,
                 winner,
                 customParams,
                 graphRulesProcessingParams
             );
 
-            Account account = Account(followerAccount);
-            try
-                account.executeTransaction(address(lensGraph), 0, data)
-            returns (bytes memory) {
+            bytes memory executeData = abi.encodeWithSelector(
+                Account.executeTransaction.selector,
+                address(lensGraph),
+                0,
+                unfollowData
+            );
+
+            (bool success, ) = follower.delegatecall(executeData);
+            if (success) {
                 totalUnfollows[winner]++;
-            } catch {
-                // Continue execution even if the call fails.
             }
         }
     }
