@@ -102,7 +102,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   const { execute: executeLogin, loading: loginLoading, error: loginError } = useLogin();
   const { execute: executeLogout, loading: logoutLoading, error: logoutError } = useLogout();
   const { data: sessionClient, loading: sessionLoading, error: sessionError } = useSessionClient();
-  const { data: lensUser } = useAuthenticatedUser();
+  const { data: lensUser, loading: userLoading } = useAuthenticatedUser();
 
   const lensClient = PublicClient.create({
     environment: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? testnet : mainnet,
@@ -124,8 +124,8 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   }, [walletAddress]);
 
   useEffect(() => {
-    setIsLoading(isConnecting || loginLoading || sessionLoading || logoutLoading);
-  }, [isConnecting, loginLoading, sessionLoading, logoutLoading]);
+    setIsLoading(isConnecting || loginLoading || sessionLoading || logoutLoading || userLoading);
+  }, [isConnecting, loginLoading, sessionLoading, logoutLoading, userLoading]);
 
   useEffect(() => {
     if (loginError) {

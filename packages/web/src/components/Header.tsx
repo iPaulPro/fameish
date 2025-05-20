@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useLensSession } from "@/hooks/LensSessionProvider";
 import { useRouter } from "next/navigation";
+import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
+import { useReadContract } from "wagmi";
+import { fameishAbi } from "@/lib/abis/fameish";
 
 type HeaderProps = {
   showLinks?: boolean;
@@ -11,6 +14,17 @@ export default function Header({ showLinks }: HeaderProps) {
   const { walletAddress, lensUser, logOut } = useLensSession();
 
   const router = useRouter();
+
+  const { data: drawingTimestamp } = useReadContract({
+    address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
+    abi: fameishAbi,
+    functionName: "winnerSetTimestamp",
+  });
+
+  const handleLogout = async () => {
+    await logOut();
+    router.push("/");
+  };
 
   return (
     <header className="w-full px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
@@ -31,7 +45,16 @@ export default function Header({ showLinks }: HeaderProps) {
           </Link>
         </nav>
       ) : (
-        <div className="hidden md:block"></div>
+        <div className="hidden md:block">
+          {drawingTimestamp && (
+            <AnimatedCountdownClock
+              textClassName="!text-xl opacity-65"
+              animationEnabled={false}
+              targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)}
+              onComplete={() => alert("done!")}
+            />
+          )}
+        </div>
       )}
 
       <div className="flex items-center justify-end gap-x-6">
@@ -41,7 +64,7 @@ export default function Header({ showLinks }: HeaderProps) {
               Account
             </Link>
           ) : (
-            <Button variant="link" onClick={logOut}>
+            <Button variant="link" onClick={handleLogout} className="opacity-65">
               Log out
             </Button>
           )

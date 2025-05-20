@@ -11,6 +11,7 @@ interface AnimatedCountdownClockProps {
   baseColor?: string;
   /** Tailwind classes for overall text styling */
   textClassName?: string;
+  animationEnabled?: boolean;
   /** Callback when countdown reaches zero */
   onComplete?: () => void;
 }
@@ -26,6 +27,7 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
   targetDate,
   baseColor = "#000000",
   textClassName = "",
+  animationEnabled = true,
   onComplete,
 }) => {
   const end = typeof targetDate === "string" ? new Date(targetDate) : targetDate;
@@ -85,7 +87,7 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
       const spanKey = `${key}-${idx}-${char}`;
       const commonClasses = "inline-block";
 
-      return changed ? (
+      return animationEnabled && changed ? (
         <motion.span
           key={spanKey}
           className={commonClasses}

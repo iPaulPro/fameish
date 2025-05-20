@@ -2,7 +2,7 @@
 
 import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
 import Link from "next/link";
-import { LuChevronRight } from "react-icons/lu";
+import { LuChevronRight, LuLoader } from "react-icons/lu";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CountUp from "@/components/CountUp";
@@ -21,13 +21,13 @@ export default function Home() {
   const [winnerAccount, setWinnerAccount] = useState<Account | undefined>(undefined);
   const [userCount, setUserCount] = useState<number>(0);
 
-  const { data: winnerAddress } = useReadContract({
+  const { data: winnerAddress, isLoading: isWinnerLoading } = useReadContract({
     address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
     abi: fameishAbi,
     functionName: "winner",
   });
 
-  const { data: drawingTimestamp } = useReadContract({
+  const { data: drawingTimestamp, isLoading: isTimestampLoading } = useReadContract({
     address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
     abi: fameishAbi,
     functionName: "winnerSetTimestamp",
@@ -95,49 +95,57 @@ export default function Home() {
           <div className="text-sm opacity-65 text-center pt-4">It&apos;s totally free to join and use.</div>
         </div>
         <div className="flex-grow flex flex-col justify-end items-center">
-          <div className="bg-background w-full max-w-3xl rounded-t-3xl shadow-xl flex flex-col items-center px-6 py-8 md:py-12 gap-2">
-            {drawingTimestamp && (
-              <div className="flex flex-col items-center gap-2">
-                <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
-                <AnimatedCountdownClock
-                  targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)}
-                  onComplete={() => alert("done!")}
-                />
+          <div className="bg-background w-full max-w-3xl rounded-t-3xl shadow-xl px-6 py-8 md:py-12">
+            {isWinnerLoading || isTimestampLoading ? (
+              <div className="flex flex-grow items-center justify-center h-96">
+                <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
               </div>
-            )}
-
-            {winnerAccount && (
-              <div className="flex flex-col items-center gap-2">
-                <div className="text-lg opacity-45 font-medium pt-2">Today&apos;s winner</div>
-
-                <div className="flex flex-col items-center gap-1">
-                  <Avatar className="w-36 h-36">
-                    <AvatarImage src={winnerAccount.metadata?.picture} />
-                    <AvatarFallback>
-                      <FaUserCircle className="w-36 h-36 opacity-45" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex gap-2">
-                    <span className="font-bold">
-                      {winnerAccount.metadata?.name ?? winnerAccount.username?.localName ?? winnerAccount.address}
-                    </span>
-                    {winnerAccount.metadata?.name && winnerAccount.username && (
-                      <span className="opacity-65">@{winnerAccount.username.localName}</span>
-                    )}
+            ) : (
+              <div className="flex flex-col items-center gap-2 min-h-96">
+                {drawingTimestamp && (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
+                    <AnimatedCountdownClock
+                      targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)}
+                      onComplete={() => alert("done!")}
+                    />
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-center bg-accent rounded-full h-12">
-                  <span className="bg-neutral-100 rounded-full h-full px-6 flex items-center font-medium">
-                    Followers gained
-                  </span>
-                  <CountUp
-                    to={userCount || (followerCount && Number(followerCount)) || 0}
-                    duration={3}
-                    className="font-bold pl-4 pr-6"
-                    separator=","
-                  />
-                </div>
+                {winnerAccount && (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-lg opacity-45 font-medium pt-2">Today&apos;s winner</div>
+
+                    <div className="flex flex-col items-center gap-1">
+                      <Avatar className="w-36 h-36">
+                        <AvatarImage src={winnerAccount.metadata?.picture} />
+                        <AvatarFallback>
+                          <FaUserCircle className="w-36 h-36 opacity-45" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex gap-2">
+                        <span className="font-bold">
+                          {winnerAccount.metadata?.name ?? winnerAccount.username?.localName ?? winnerAccount.address}
+                        </span>
+                        {winnerAccount.metadata?.name && winnerAccount.username && (
+                          <span className="opacity-65">@{winnerAccount.username.localName}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center bg-accent rounded-full h-12">
+                      <span className="bg-neutral-100 rounded-full h-full px-6 flex items-center font-medium">
+                        Followers gained
+                      </span>
+                      <CountUp
+                        to={(userCount > 0 && userCount - 1) || (followerCount && Number(followerCount)) || 0}
+                        duration={3}
+                        className="font-bold pl-4 pr-6"
+                        separator=","
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -147,7 +155,7 @@ export default function Home() {
              xl:top-96 xl:left-40 2xl:left-80"
         >
           <div className="w-32 h-32 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg -rotate-6">
-            <img src="/images/dummy_profile_photo-1.jpeg" alt="Profile" className="w-full h-full object-cover" />
+            <img src="/images/dummy_profile_photo.jpeg" alt="Profile" className="w-full h-full object-cover" />
           </div>
         </div>
         <div
@@ -155,7 +163,7 @@ export default function Home() {
              xl:top-[30rem] xl:right-48 2xl:right-80"
         >
           <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
-            <img src="/images/dummy_profile_photo-2.jpeg" alt="Profile" className="w-full h-full object-cover" />
+            <img src="/images/dummy_profile_photo-2.webp" alt="Profile" className="w-full h-full object-cover" />
           </div>
         </div>
       </main>
