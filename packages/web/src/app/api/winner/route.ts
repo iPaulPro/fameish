@@ -16,7 +16,7 @@ export const maxDuration = 60; // This function can run for a maximum of 60 seco
 
 const ZeroAddress = "0x0000000000000000000000000000000000000000";
 
-const fameishAddress = process.env.FAMEISH_CONTRACT_ADDRESS! as `0x${string}`;
+const fameishAddress = process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`;
 
 export async function GET(request: Request) {
   // https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs

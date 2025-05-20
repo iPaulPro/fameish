@@ -4,9 +4,10 @@ import { getDefaultConfig } from "connectkit";
 
 export const config = createConfig(
   getDefaultConfig({
-    chains: [chains.mainnet, chains.testnet],
+    // chains: [chains.mainnet, chains.testnet],
+    chains: [chains.testnet],
     transports: {
-      [chains.mainnet.id]: http(`https://lens-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`),
+      // [chains.mainnet.id]: http(`https://lens-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`),
       [chains.testnet.id]: http(`https://lens-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`),
     },
 

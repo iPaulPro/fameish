@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useLensSession } from "@/hooks/LensSessionProvider";
+import { useRouter } from "next/navigation";
 
 type HeaderProps = {
   showLinks?: boolean;
@@ -10,9 +10,16 @@ type HeaderProps = {
 export default function Header({ showLinks }: HeaderProps) {
   const { walletAddress, lensUser, logOut } = useLensSession();
 
+  const router = useRouter();
+
   return (
     <header className="w-full px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
-      <span className="font-damion text-4xl">Fameish</span>
+      <span
+        onClick={() => router.push("/")}
+        className={`font-damion text-4xl cursor-pointer ${!showLinks && "opacity-45"}`}
+      >
+        Fameish
+      </span>
 
       {showLinks ? (
         <nav className="hidden md:flex items-center space-x-8">
@@ -39,20 +46,16 @@ export default function Header({ showLinks }: HeaderProps) {
             </Button>
           )
         ) : (
-          <Link href="/signup" className="font-medium">
-            Log in
-          </Link>
+          showLinks && (
+            <Link href="/signup" className="font-medium">
+              Log in
+            </Link>
+          )
         )}
-        {!walletAddress && (
-          <Link
-            href="/signup"
-            className={cn(
-              buttonVariants({ variant: "default", size: "lg" }),
-              "hidden md:block bg-black text-white px-6 py-2 rounded-full font-medium",
-            )}
-          >
+        {showLinks && !walletAddress && (
+          <Button onClick={() => router.push("/signup")} size="lg" className="hidden md:block font-medium">
             Sign up
-          </Link>
+          </Button>
         )}
       </div>
     </header>

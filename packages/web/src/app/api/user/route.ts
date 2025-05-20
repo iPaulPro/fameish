@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     console.log("POST /user : ✓ New user verified");
 
     const winnerAccount = await publicClient.readContract({
-      address: process.env.FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
+      address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
       abi: fameishAbi,
       functionName: "winner",
     });

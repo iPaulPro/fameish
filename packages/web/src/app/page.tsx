@@ -8,10 +8,71 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CountUp from "@/components/CountUp";
 import { cn } from "@/lib/utils";
 import Header from "@/components/Header";
+import { useReadContract } from "wagmi";
+import { fameishAbi } from "@/lib/abis/fameish";
+import { useEffect, useState } from "react";
+import { Account } from "@lens-protocol/react";
+import { fetchAccount } from "@lens-protocol/client/actions";
+import { lensClient } from "@/lib/lens/client";
+import { FaUserCircle } from "react-icons/fa";
+import { createSupabaseClient } from "@/lib/supabase/client";
 
 export default function Home() {
+  const [winnerAccount, setWinnerAccount] = useState<Account | undefined>(undefined);
+  const [userCount, setUserCount] = useState<number>(0);
+
+  const { data: winnerAddress } = useReadContract({
+    address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
+    abi: fameishAbi,
+    functionName: "winner",
+  });
+
+  const { data: drawingTimestamp } = useReadContract({
+    address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
+    abi: fameishAbi,
+    functionName: "winnerSetTimestamp",
+  });
+
+  const { data: followerCount } = useReadContract({
+    address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
+    abi: fameishAbi,
+    functionName: "followerCount",
+  });
+
+  const supabase = createSupabaseClient();
+
+  useEffect(() => {
+    const updateUserCount = async () => {
+      const { data, error } = await supabase.from("record_count").select().eq("table_name", "user").limit(1).single();
+      if (error) {
+        console.error("Error fetching user count:", error);
+        return;
+      }
+      if (data) {
+        setUserCount(data.count);
+      }
+    };
+
+    updateUserCount();
+  }, []);
+
+  useEffect(() => {
+    if (!winnerAddress) return;
+
+    const getAccount = async () => {
+      const res = await fetchAccount(lensClient, {
+        address: winnerAddress,
+      });
+      if (res.isOk() && res.value) {
+        setWinnerAccount(res.value);
+      }
+    };
+
+    getAccount();
+  }, [winnerAddress]);
+
   return (
-    <div className="relative overflow-hidden flex flex-col">
+    <div className="min-h-screen relative overflow-hidden flex flex-col">
       <Header showLinks={true} />
 
       <main className="container flex-grow mx-auto px-4 pt-16 md:pt-28 relative flex flex-col">
@@ -24,7 +85,7 @@ export default function Home() {
             href="/signup"
             className={cn(
               buttonVariants({ variant: "default", size: "lg" }),
-              "w-fit text-lg !ps-12 !pe-10 !py-8 rounded-full font-bold",
+              "w-fit text-lg !ps-12 !pe-10 !py-8 rounded-full font-bold hover:no-underline",
             )}
           >
             Sign up
@@ -35,33 +96,50 @@ export default function Home() {
         </div>
         <div className="flex-grow flex flex-col justify-end items-center">
           <div className="bg-background w-full max-w-3xl rounded-t-3xl shadow-xl flex flex-col items-center px-6 py-8 md:py-12 gap-2">
-            <div className="flex flex-col items-center gap-2">
-              <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
-              <AnimatedCountdownClock
-                targetDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
-                onComplete={() => alert("done!")}
-              />
-            </div>
-
-            <div className="text-lg opacity-45 font-medium pt-2">Today&apos;s winner</div>
-
-            <div className="flex flex-col items-center gap-1">
-              <Avatar className="w-36 h-36">
-                <AvatarImage src="/images/dummy_profile_photo.jpeg" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-              <div className="flex gap-2">
-                <span className="font-bold">Kai Mercer</span>
-                <span className="opacity-65">@VibeCrafter</span>
+            {drawingTimestamp && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
+                <AnimatedCountdownClock
+                  targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)}
+                  onComplete={() => alert("done!")}
+                />
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center bg-accent rounded-full h-12">
-              <span className="bg-neutral-100 rounded-full h-full px-6 flex items-center font-medium">
-                Followers gained
-              </span>
-              <CountUp to={32496} duration={3} className="font-bold pl-4 pr-6" separator="," />
-            </div>
+            {winnerAccount && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-lg opacity-45 font-medium pt-2">Today&apos;s winner</div>
+
+                <div className="flex flex-col items-center gap-1">
+                  <Avatar className="w-36 h-36">
+                    <AvatarImage src={winnerAccount.metadata?.picture} />
+                    <AvatarFallback>
+                      <FaUserCircle className="w-36 h-36 opacity-45" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex gap-2">
+                    <span className="font-bold">
+                      {winnerAccount.metadata?.name ?? winnerAccount.username?.localName ?? winnerAccount.address}
+                    </span>
+                    {winnerAccount.metadata?.name && winnerAccount.username && (
+                      <span className="opacity-65">@{winnerAccount.username.localName}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center bg-accent rounded-full h-12">
+                  <span className="bg-neutral-100 rounded-full h-full px-6 flex items-center font-medium">
+                    Followers gained
+                  </span>
+                  <CountUp
+                    to={userCount || (followerCount && Number(followerCount)) || 0}
+                    duration={3}
+                    className="font-bold pl-4 pr-6"
+                    separator=","
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div

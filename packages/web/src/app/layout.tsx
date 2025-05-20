@@ -28,7 +28,7 @@ const limelight = Martian_Mono({
 
 export const metadata: Metadata = {
   title: "Fameish",
-  description: "Become the most-followed person on Lens for a day",
+  description: "Become the most-followed person on Lens, for a day",
 };
 
 export default function RootLayout({

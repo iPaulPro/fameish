@@ -74,6 +74,10 @@ ALTER TABLE public.winner ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 -- score
+CREATE POLICY "Public read access" ON public.record_count FOR
+SELECT
+  USING (TRUE);
+
 CREATE POLICY "Public read access" ON public.score FOR
 SELECT
   USING (TRUE);
