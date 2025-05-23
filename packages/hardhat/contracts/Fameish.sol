@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Account} from "lens-modules/contracts/extensions/account/Account.sol";
 import {Graph} from "lens-modules/contracts/core/primitives/graph/Graph.sol";
-import {FameishRandom} from "./FameishRandom.sol";
+import {FameishRandom} from "./helpers/FameishRandom.sol";
 import {RuleChange, RuleProcessingParams, KeyValue} from "lens-modules/contracts/core/types/Types.sol";
 
 contract Fameish is AccessControl {

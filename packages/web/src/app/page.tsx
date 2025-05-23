@@ -105,10 +105,7 @@ export default function Home() {
                 {drawingTimestamp && (
                   <div className="flex flex-col items-center gap-2">
                     <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
-                    <AnimatedCountdownClock
-                      targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)}
-                      onComplete={() => alert("done!")}
-                    />
+                    <AnimatedCountdownClock targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)} />
                   </div>
                 )}
 

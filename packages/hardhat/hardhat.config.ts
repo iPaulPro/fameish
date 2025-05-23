@@ -47,13 +47,15 @@ const config: HardhatUserConfig = {
       ethNetwork: "sepolia",
       verifyURL: "https://api-explorer-verify.staging.lens.zksync.dev/contract_verification",
       enableVerifyURL: true,
+      accounts: [deployerPrivateKey],
     },
     lensMainnet: {
       chainId: 232,
-      url: "https://rpc.lens.dev/",
+      url: "https://rpc.lens.xyz/",
       zksync: true,
-      verifyURL: "https://api-explorer-verify.lens.matterhosted.dev/contract_verification",
+      verifyURL: "https://verify.lens.xyz/contract_verification",
       enableVerifyURL: true,
+      accounts: [deployerPrivateKey],
     },
   },
 };
