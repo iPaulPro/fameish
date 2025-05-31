@@ -12,8 +12,6 @@ import { getContract } from "@/lib/lens/contracts";
 import { encodeFunctionData } from "viem";
 import { accountAbi } from "@/lib/abis/account";
 
-export const maxDuration = 60; // This function can run for a maximum of 60 seconds
-
 const ZeroAddress = "0x0000000000000000000000000000000000000000";
 
 const fameishAddress = process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`;
