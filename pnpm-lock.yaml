@@ -102,8 +102,8 @@ importers:
         specifier: 2.22.19
         version: 2.22.19(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@22.7.5)(typescript@5.5.4))(typescript@5.5.4)(utf-8-validate@5.0.10)
       lens-modules:
-        specifier: ^3.0.0
-        version: 3.0.0(glob@10.4.5)
+        specifier: ^3.0.1
+        version: 3.0.1
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -4160,12 +4160,6 @@ packages:
     resolution: {integrity: sha512-XxwI8EOhVQgWp6iDL+3b0r86f4d6AX6zSU55HfB4ydCEuXLXc5FcYeOu+nnGftS4TEju/11rt4KJPTMgbfmv4A==}
     engines: {node: '>=10.13.0'}
 
-  glob-promise@6.0.7:
-    resolution: {integrity: sha512-DEAe6br1w8ZF+y6KM2pzgdfhpreladtNvyNNVgSkxxkFWzXTJFXxQrJQQbAnc7kL0EUd7w5cR8u4K0P4+/q+Gw==}
-    engines: {node: '>=16'}
-    peerDependencies:
-      glob: ^8.0.3
-
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
     hasBin: true
@@ -4620,8 +4614,8 @@ packages:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
 
-  lens-modules@3.0.0:
-    resolution: {integrity: sha512-UxaiiHP9bUAgfwU+vAyHLRmFBXXQjd5/lnx1WU9dww7UKeICT4kmoJHrgDS+/zJ8GxLyGNXT31AI+wpBruPo2w==}
+  lens-modules@3.0.1:
+    resolution: {integrity: sha512-AijR267OLkISlRkdEU4d+xTbTRLNIVQUjXBETkcisS7wr1baFwQtcdhyqLfK+wXHiUt/orkWOpsZ1cM3/brUPA==}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -12271,10 +12265,6 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
 
-  glob-promise@6.0.7(glob@10.4.5):
-    dependencies:
-      glob: 10.4.5
-
   glob@10.4.5:
     dependencies:
       foreground-child: 3.3.1
@@ -12786,11 +12776,7 @@ snapshots:
     dependencies:
       language-subtag-registry: 0.3.23
 
-  lens-modules@3.0.0(glob@10.4.5):
-    dependencies:
-      glob-promise: 6.0.7(glob@10.4.5)
-    transitivePeerDependencies:
-      - glob
+  lens-modules@3.0.1: {}
 
   levn@0.4.1:
     dependencies:
