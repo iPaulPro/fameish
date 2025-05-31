@@ -11,6 +11,7 @@ interface AnimatedCountdownClockProps {
   baseColor?: string;
   /** Tailwind classes for overall text styling */
   textClassName?: string;
+  /** Toggle digit animations */
   animationEnabled?: boolean;
   /** Callback when countdown reaches zero */
   onComplete?: () => void;
@@ -36,12 +37,10 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
   const completedRef = useRef(false);
 
   useEffect(() => {
-    // Calculate remaining time and update state
     const updateTime = () => {
       const now = Date.now();
       const diff = Math.max(end.getTime() - now, 0);
 
-      // Fire onComplete only once when timer hits zero
       if (diff === 0 && !completedRef.current) {
         onComplete?.();
         completedRef.current = true;
@@ -58,19 +57,12 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
       });
     };
 
-    // Align ticks to real-time second boundaries to prevent drift
-    let timerId: ReturnType<typeof setTimeout>;
-    const tick = () => {
-      updateTime();
-      const drift = Date.now() % 1000;
-      timerId = setTimeout(tick, 1000 - drift);
-    };
-
-    tick();
-    return () => clearTimeout(timerId);
+    updateTime();
+    const intervalId = setInterval(updateTime, 200);
+    return () => clearInterval(intervalId);
   }, [end, onComplete]);
 
-  // Framer Motion variants for animation
+  // Only animate when seconds change
   const variants = {
     initial: { scale: 1, color: baseColor },
     animate: {
@@ -83,7 +75,8 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
     const str = String(value).padStart(2, "0");
     const prevStr = String(prevTimeRef.current[key]).padStart(2, "0");
     return str.split("").map((char, idx) => {
-      const changed = prevStr[idx] !== char;
+      const isSecond = key === "seconds";
+      const changed = prevStr[idx] !== char && isSecond;
       const spanKey = `${key}-${idx}-${char}`;
       const commonClasses = "inline-block";
 
