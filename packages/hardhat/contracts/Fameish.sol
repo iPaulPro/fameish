@@ -1,26 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Account} from "lens-modules/contracts/extensions/account/Account.sol";
-import {Graph} from "lens-modules/contracts/core/primitives/graph/Graph.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {IAccount} from "lens-modules/contracts/extensions/account/IAccount.sol";
+import {IGraph} from "lens-modules/contracts/core/interfaces/IGraph.sol";
 import {FameishRandom} from "./helpers/FameishRandom.sol";
 import {RuleChange, RuleProcessingParams, KeyValue} from "lens-modules/contracts/core/types/Types.sol";
 
-contract Fameish is AccessControl {
+contract Fameish is Initializable, AccessControlUpgradeable {
     event RandomIndexSelected(
-        uint256 indexed randomIndex,
-        string followerListURI,
+        uint256 randomIndex,
+        string indexed followerListURI,
         uint256 followerCount
     );
-    event WinnerSet(address indexed winner);
+    event WinnerChanged(
+        address indexed oldWinner,
+        uint256 oldWinnerTotalFollows,
+        uint256 oldWinnerTotalUnfollows,
+        address indexed newWinner,
+        string indexed followerListURI
+    );
 
-    error InvalidConstructorParams();
-    error InvalidAccountParams();
+    error InvalidConstructor();
+    error InvalidAccount();
+    error InvalidParams();
+    error WinnerNotSet();
 
     bytes32 public constant ACCOUNT_MANAGER = keccak256("ACCOUNT_MANAGER");
 
-    Graph public lensGraph;
+    IGraph public lensGraph;
     FameishRandom public fameishRandom;
 
     address public winner;
@@ -32,23 +41,30 @@ contract Fameish is AccessControl {
     mapping(address account => uint256 totalFollows) public totalFollows;
     mapping(address account => uint256 totalUnfollows) public totalUnfollows;
 
-    constructor(
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
+        address _admin,
         address _accountManager,
         address _lensGraph,
-        address _fameishRandomAddress
-    ) {
+        address _fameishRandom
+    ) public initializer {
         if (
             _accountManager == address(0) ||
             _lensGraph == address(0) ||
-            _fameishRandomAddress == address(0)
+            _fameishRandom == address(0)
         ) {
-            revert InvalidConstructorParams();
+            revert InvalidConstructor();
         }
 
-        lensGraph = Graph(_lensGraph);
-        fameishRandom = FameishRandom(_fameishRandomAddress);
+        lensGraph = IGraph(_lensGraph);
+        fameishRandom = FameishRandom(_fameishRandom);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        __AccessControl_init();
+        _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(ACCOUNT_MANAGER, _accountManager);
     }
 
@@ -56,98 +72,110 @@ contract Fameish is AccessControl {
         uint256 _followerCount,
         string calldata _followerListURI
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256) {
+        if (_followerCount < 3 || bytes(_followerListURI).length == 0) {
+            revert InvalidParams();
+        }
+
         followerIndex = fameishRandom.randomInRange(0, _followerCount - 1);
         followerCount = _followerCount;
         followerListURI = _followerListURI;
+
         emit RandomIndexSelected(
             followerIndex,
             _followerListURI,
             _followerCount
         );
+
         return followerIndex;
     }
 
     function setWinner(address _winner) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_winner == address(0)) {
-            revert InvalidAccountParams();
+            revert InvalidAccount();
         }
+        address oldWinner = winner;
         winner = _winner;
         totalFollows[_winner] = 0;
         totalUnfollows[_winner] = 0;
         winnerSetTimestamp = block.timestamp;
-        emit WinnerSet(_winner);
+        emit WinnerChanged(
+            oldWinner,
+            totalFollows[winner],
+            totalUnfollows[winner],
+            _winner,
+            followerListURI
+        );
     }
 
     function bulkFollow(
-        address payable[] calldata _followers
+        IAccount[] calldata _followers
     ) external onlyRole(ACCOUNT_MANAGER) {
+        if (winner == address(0)) {
+            revert WinnerNotSet();
+        }
+
         for (uint256 i = 0; i < _followers.length; i++) {
-            address payable follower = _followers[i];
-            KeyValue[] memory customParams = new KeyValue[](0);
-            RuleProcessingParams[]
-                memory graphRulesProcessingParams = new RuleProcessingParams[](
-                    0
-                );
-            RuleProcessingParams[]
-                memory followRulesProcessingParams = new RuleProcessingParams[](
-                    0
-                );
-            KeyValue[] memory extraData = new KeyValue[](0);
+            IAccount follower = _followers[i];
+
+            if (!follower.canExecuteTransactions(address(this))) {
+                continue; // Skip accounts that cannot execute transactions
+            }
 
             bytes memory followData = abi.encodeWithSelector(
                 lensGraph.follow.selector,
-                follower,
+                address(follower),
                 winner,
-                customParams,
-                graphRulesProcessingParams,
-                followRulesProcessingParams,
-                extraData
+                new KeyValue[](0),
+                new RuleProcessingParams[](0),
+                new RuleProcessingParams[](0),
+                new KeyValue[](0)
             );
 
-            bytes memory executeData = abi.encodeWithSelector(
-                Account.executeTransaction.selector,
-                address(lensGraph),
-                0,
-                followData
-            );
-
-            (bool success, ) = follower.delegatecall(executeData);
-            if (success) {
+            try
+                follower.executeTransaction(address(lensGraph), 0, followData)
+            returns (bytes memory) {
                 totalFollows[winner]++;
+            } catch {
+                // Handle failure silently
             }
         }
     }
 
     function bulkUnfollow(
-        address payable[] calldata _followers
+        IAccount[] calldata _followers
     ) external onlyRole(ACCOUNT_MANAGER) {
+        if (winner == address(0)) {
+            revert WinnerNotSet();
+        }
+
         for (uint256 i = 0; i < _followers.length; i++) {
-            address payable follower = _followers[i];
-            KeyValue[] memory customParams = new KeyValue[](0);
-            RuleProcessingParams[]
-                memory graphRulesProcessingParams = new RuleProcessingParams[](
-                    0
-                );
+            IAccount follower = _followers[i];
+
+            if (!follower.canExecuteTransactions(address(this))) {
+                continue; // Skip accounts that cannot execute transactions
+            }
 
             bytes memory unfollowData = abi.encodeWithSelector(
                 lensGraph.unfollow.selector,
-                follower,
+                address(follower),
                 winner,
-                customParams,
-                graphRulesProcessingParams
+                new KeyValue[](0),
+                new RuleProcessingParams[](0)
             );
 
-            bytes memory executeData = abi.encodeWithSelector(
-                Account.executeTransaction.selector,
-                address(lensGraph),
-                0,
-                unfollowData
-            );
-
-            (bool success, ) = follower.delegatecall(executeData);
-            if (success) {
+            try
+                follower.executeTransaction(address(lensGraph), 0, unfollowData)
+            returns (bytes memory) {
                 totalUnfollows[winner]++;
+            } catch {
+                // Handle failure silently
             }
         }
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(AccessControlUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }
