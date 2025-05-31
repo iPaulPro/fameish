@@ -37,7 +37,7 @@ export default function Header({ showLinks }: HeaderProps) {
 
       {showLinks ? (
         <nav className="hidden md:flex items-center space-x-8">
-          <Link href="#" className="text-gray-700 hover:text-black">
+          <Link href="/signup" className="text-gray-700 hover:text-black">
             How it works
           </Link>
           <Link href="#" className="text-gray-700 hover:text-black">

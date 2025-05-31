@@ -72,10 +72,10 @@ export default function Home() {
   }, [winnerAddress]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex flex-col">
+    <div className="min-h-screen relative flex flex-col">
       <Header showLinks={true} />
 
-      <main className="container flex-grow mx-auto px-4 pt-16 md:pt-28 relative flex flex-col">
+      <main className="container flex-grow mx-auto px-4 pt-8 md:pt-24 relative flex flex-col">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto pb-8 md:pb-12">
           <h1 className="text-3xl md:text-[4rem] lg:text-[4.5rem] xl:text-[5rem] font-medium leading-10 md:leading-20 tracking-tighter mb-8 text-balance">
             Become the most-followed person on Lens, for a day

@@ -132,6 +132,10 @@
   }
 }
 
+html, body {
+  height: 100%;
+}
+
 .gradient-bg {
   background-image:
       radial-gradient(

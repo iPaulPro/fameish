@@ -103,7 +103,7 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
     <div className="inline-block text-center select-none">
       <div
         className={cn(
-          "font-limelight tabular-nums text-5xl md:text-6xl flex items-center justify-center",
+          "font-limelight tabular-nums text-4xl md:text-6xl flex items-center justify-center",
           textClassName,
         )}
       >
