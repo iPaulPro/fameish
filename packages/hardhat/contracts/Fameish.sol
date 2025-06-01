@@ -9,24 +9,6 @@ import {FameishRandom} from "./helpers/FameishRandom.sol";
 import {RuleChange, RuleProcessingParams, KeyValue} from "lens-modules/contracts/core/types/Types.sol";
 
 contract Fameish is Initializable, AccessControlUpgradeable {
-    event RandomIndexSelected(
-        uint256 randomIndex,
-        string indexed followerListURI,
-        uint256 followerCount
-    );
-    event WinnerChanged(
-        address indexed oldWinner,
-        uint256 oldWinnerTotalFollows,
-        uint256 oldWinnerTotalUnfollows,
-        address indexed newWinner,
-        string indexed followerListURI
-    );
-
-    error InvalidConstructor();
-    error InvalidAccount();
-    error InvalidParams();
-    error WinnerNotSet();
-
     bytes32 public constant ACCOUNT_MANAGER = keccak256("ACCOUNT_MANAGER");
 
     IGraph public lensGraph;
@@ -41,6 +23,26 @@ contract Fameish is Initializable, AccessControlUpgradeable {
     mapping(address account => uint256 totalFollows) public totalFollows;
     mapping(address account => uint256 totalUnfollows) public totalUnfollows;
 
+    uint256[50] private __gap;
+
+    event RandomIndexSelected(
+        uint256 randomIndex,
+        string indexed followerListURI,
+        uint256 followerCount
+    );
+    event WinnerChanged(
+        address indexed oldWinner,
+        uint256 oldWinnerTotalFollows,
+        uint256 oldWinnerTotalUnfollows,
+        address indexed newWinner,
+        string indexed followerListURI
+    );
+
+    error InvalidInitializers();
+    error InvalidAccount();
+    error InvalidParams();
+    error WinnerNotSet();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -49,19 +51,15 @@ contract Fameish is Initializable, AccessControlUpgradeable {
     function initialize(
         address _admin,
         address _accountManager,
-        address _lensGraph,
-        address _fameishRandom
+        IGraph _lensGraph,
+        FameishRandom _fameishRandom
     ) public initializer {
-        if (
-            _accountManager == address(0) ||
-            _lensGraph == address(0) ||
-            _fameishRandom == address(0)
-        ) {
-            revert InvalidConstructor();
+        if (_admin == address(0) || _accountManager == address(0)) {
+            revert InvalidInitializers();
         }
 
-        lensGraph = IGraph(_lensGraph);
-        fameishRandom = FameishRandom(_fameishRandom);
+        lensGraph = _lensGraph;
+        fameishRandom = _fameishRandom;
 
         __AccessControl_init();
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -93,15 +91,20 @@ contract Fameish is Initializable, AccessControlUpgradeable {
         if (_winner == address(0)) {
             revert InvalidAccount();
         }
+
         address oldWinner = winner;
+        uint256 oldTotalFollows = totalFollows[oldWinner];
+        uint256 oldTotalUnfollows = totalUnfollows[oldWinner];
+
         winner = _winner;
-        totalFollows[_winner] = 0;
-        totalUnfollows[_winner] = 0;
+        totalFollows[winner] = 0;
+        totalUnfollows[winner] = 0;
         winnerSetTimestamp = block.timestamp;
+
         emit WinnerChanged(
             oldWinner,
-            totalFollows[winner],
-            totalUnfollows[winner],
+            oldTotalFollows,
+            oldTotalUnfollows,
             _winner,
             followerListURI
         );
@@ -114,6 +117,10 @@ contract Fameish is Initializable, AccessControlUpgradeable {
             revert WinnerNotSet();
         }
 
+        KeyValue[] memory emptyKeyValue = new KeyValue[](0);
+        RuleProcessingParams[]
+            memory emptyRulesProcessingParams = new RuleProcessingParams[](0);
+
         for (uint256 i = 0; i < _followers.length; i++) {
             IAccount follower = _followers[i];
 
@@ -125,10 +132,10 @@ contract Fameish is Initializable, AccessControlUpgradeable {
                 lensGraph.follow.selector,
                 address(follower),
                 winner,
-                new KeyValue[](0),
-                new RuleProcessingParams[](0),
-                new RuleProcessingParams[](0),
-                new KeyValue[](0)
+                emptyKeyValue,
+                emptyRulesProcessingParams,
+                emptyRulesProcessingParams,
+                emptyKeyValue
             );
 
             try
@@ -148,6 +155,10 @@ contract Fameish is Initializable, AccessControlUpgradeable {
             revert WinnerNotSet();
         }
 
+        KeyValue[] memory emptyKeyValue = new KeyValue[](0);
+        RuleProcessingParams[]
+            memory emptyRulesProcessingParams = new RuleProcessingParams[](0);
+
         for (uint256 i = 0; i < _followers.length; i++) {
             IAccount follower = _followers[i];
 
@@ -159,8 +170,8 @@ contract Fameish is Initializable, AccessControlUpgradeable {
                 lensGraph.unfollow.selector,
                 address(follower),
                 winner,
-                new KeyValue[](0),
-                new RuleProcessingParams[](0)
+                emptyKeyValue,
+                emptyRulesProcessingParams
             );
 
             try
