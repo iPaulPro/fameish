@@ -355,7 +355,7 @@ export default function Signup() {
   }, [user]);
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full flex-grow flex flex-col">
       <Header />
       <div className="flex-grow w-full h-full flex justify-center items-center -mt-10">
         <div className="bg-background rounded-2xl shadow-xl w-full max-w-4xl grid md:grid-cols-12 items-center overflow-hidden">
