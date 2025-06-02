@@ -28,12 +28,9 @@ export default function Header({ showLinks }: HeaderProps) {
 
   return (
     <header className="w-full px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
-      <span
-        onClick={() => router.push("/")}
-        className={`font-damion text-4xl cursor-pointer ${!showLinks && "opacity-45"}`}
-      >
-        Fameish
-      </span>
+      <Link href="/" className={`${!showLinks && "opacity-45"}`}>
+        <img src="images/fameish-logo.svg" className="h-7" />
+      </Link>
 
       {showLinks ? (
         <nav className="hidden md:flex items-center space-x-8">

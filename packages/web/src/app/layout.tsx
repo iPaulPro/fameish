@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
-import { Roboto, Geist_Mono, Damion, Martian_Mono } from "next/font/google";
+import { Roboto, Geist_Mono, Damion, Martian_Mono, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import Providers from "@/app/providers";
 
@@ -26,9 +26,18 @@ const limelight = Martian_Mono({
   subsets: ["latin"],
 });
 
+const hero = Inter_Tight({
+  weight: "600",
+  variable: "--font-hero",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Fameish",
   description: "Become the most-followed person on Lens, for a day",
+  icons: {
+    icon: "/images/fameish-icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -39,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${robotoSans.variable} ${geistMono.variable} ${damion.variable} ${limelight.variable} antialiased`}
+        className={`${robotoSans.variable} ${geistMono.variable} ${damion.variable} ${limelight.variable} ${hero.variable} antialiased`}
       >
         <div className="min-h-screen gradient-bg font-sans flex flex-col">
           <Providers>{children}</Providers>
