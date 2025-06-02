@@ -7,7 +7,7 @@ import { useReadContract, useSwitchChain, useWalletClient } from "wagmi";
 import { accountAbi } from "@/lib/abis/account";
 import { EvmAddress } from "@lens-protocol/client";
 import { addAccountManager, fetchMeDetails } from "@lens-protocol/client/actions";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { User } from "@/lib/db/tables";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
@@ -154,14 +154,14 @@ function AddAccountManagerSection({
     address: accountAddress,
     abi: accountAbi,
     functionName: "canExecuteTransactions",
-    args: [process.env.NEXT_PUBLIC_LENS_ACCOUNT_MANAGER_ADDRESS! as `0x${string}`],
+    args: [process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`],
   });
 
   const { switchChain } = useSwitchChain();
 
   useEffect(() => {
     setCanExecuteTransactions(canExecuteTransactions ?? false);
-  }, [canExecuteTransactions]);
+  }, [canExecuteTransactions, setCanExecuteTransactions]);
 
   const handleAddAccountManager = async () => {
     if (!client) return;
@@ -173,7 +173,7 @@ function AddAccountManagerSection({
     console.log("handleAddAccountManager: lens client", client, "wallet client", walletClient);
 
     const res = await addAccountManager(client, {
-      address: evmAddress(process.env.NEXT_PUBLIC_LENS_ACCOUNT_MANAGER_ADDRESS!),
+      address: evmAddress(process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS!),
       permissions: {
         canExecuteTransactions: true,
         canSetMetadataUri: false,
@@ -337,22 +337,25 @@ export default function Signup() {
 
   const supabase = createSupabaseClient();
 
-  const getUser = async (accountAddress: EvmAddress) => {
-    const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
-    const { data } = await userQuery;
-    return data as User;
-  };
+  const getUser = useCallback(
+    async (accountAddress: EvmAddress) => {
+      const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
+      const { data } = await userQuery;
+      return data as User;
+    },
+    [supabase],
+  );
 
   useEffect(() => {
     if (!lensUser) return;
     getUser(lensUser.address).then(setUser);
-  }, [lensUser]);
+  }, [lensUser, getUser]);
 
   useEffect(() => {
     if (user) {
       router.push("/account");
     }
-  }, [user]);
+  }, [user, router]);
 
   return (
     <div className="w-full flex-grow flex flex-col">

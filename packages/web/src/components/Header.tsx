@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
 import { useReadContract } from "wagmi";
 import { fameishAbi } from "@/lib/abis/fameish";
+import Image from "next/image";
 
 type HeaderProps = {
   showLinks?: boolean;
@@ -29,7 +30,7 @@ export default function Header({ showLinks }: HeaderProps) {
   return (
     <header className="w-full px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
       <Link href="/" className={`${!showLinks && "opacity-45"}`}>
-        <img src="images/fameish-logo.svg" className="h-7" />
+        <Image src="images/fameish-logo.svg" alt="Fameish logo" width={1454} height={367} className="h-7 w-auto" />
       </Link>
 
       {showLinks ? (

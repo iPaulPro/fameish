@@ -31,12 +31,13 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
   animationEnabled = true,
   onComplete,
 }) => {
-  const end = typeof targetDate === "string" ? new Date(targetDate) : targetDate;
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const prevTimeRef = useRef<TimeLeft>(timeLeft);
   const completedRef = useRef(false);
 
   useEffect(() => {
+    const end = typeof targetDate === "string" ? new Date(targetDate) : targetDate;
+
     const updateTime = () => {
       const now = Date.now();
       const diff = Math.max(end.getTime() - now, 0);
@@ -60,7 +61,7 @@ const AnimatedCountdownClock: React.FC<AnimatedCountdownClockProps> = ({
     updateTime();
     const intervalId = setInterval(updateTime, 200);
     return () => clearInterval(intervalId);
-  }, [end, onComplete]);
+  }, [onComplete, targetDate]);
 
   // Only animate when seconds change
   const variants = {

@@ -4,11 +4,12 @@ import { FaUserCircle } from "react-icons/fa";
 import CountUp from "@/components/CountUp";
 import { useReadContract } from "wagmi";
 import { fameishAbi } from "@/lib/abis/fameish";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchAccount } from "@lens-protocol/client/actions";
 import { lensClient } from "@/lib/lens/client";
 import { Account } from "@lens-protocol/react";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { LuLoader } from "react-icons/lu";
 
 type LandingCardProps = {
   winnerAddress: string;
@@ -47,28 +48,34 @@ export default function LandingCard({ winnerAddress }: LandingCardProps) {
     getAccount();
   }, [winnerAddress]);
 
-  useEffect(() => {
-    const updateUserCount = async () => {
-      const { data, error } = await supabase.from("record_count").select().eq("table_name", "user").limit(1).single();
-      if (error) {
-        console.error("Error fetching user count:", error);
-        return;
-      }
-      if (data) {
-        setUserCount(data.count);
-      }
-    };
+  const updateUserCount = useCallback(async () => {
+    const { data, error } = await supabase.from("record_count").select().eq("table_name", "user").limit(1).single();
+    if (error) {
+      console.error("Error fetching user count:", error);
+      return;
+    }
+    if (data) {
+      setUserCount(data.count);
+    }
+  }, [supabase]);
 
+  useEffect(() => {
     updateUserCount();
-  }, []);
+  }, [updateUserCount]);
 
   return (
     <div className="flex flex-col items-center gap-2 min-h-96">
-      {drawingTimestamp && (
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
-          <AnimatedCountdownClock targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)} />
+      {isTimestampLoading ? (
+        <div className="flex flex-grow items-center justify-center h-16">
+          <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
         </div>
+      ) : (
+        drawingTimestamp && (
+          <div className="flex flex-col items-center gap-2">
+            <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
+            <AnimatedCountdownClock targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)} />
+          </div>
+        )
       )}
 
       {winnerAccount && (

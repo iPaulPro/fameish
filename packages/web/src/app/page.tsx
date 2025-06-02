@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import { useReadContract } from "wagmi";
 import { fameishAbi } from "@/lib/abis/fameish";
 import LandingCard from "@/components/LandingCard";
+import Image from "next/image";
 
 export default function Home() {
   const { data: winnerAddress, isLoading: isWinnerLoading } = useReadContract({
@@ -60,7 +61,13 @@ export default function Home() {
              xl:top-96 xl:left-40 2xl:left-80"
         >
           <div className="w-32 h-32 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg -rotate-6">
-            <img src="/images/dummy_profile_photo.jpeg" alt="Profile" className="w-full h-full object-cover" />
+            <Image
+              src="/images/dummy_profile_photo.jpeg"
+              alt="Profile"
+              width={256}
+              height={256}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
         <div
@@ -68,7 +75,13 @@ export default function Home() {
              xl:top-[30rem] xl:right-48 2xl:right-80"
         >
           <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
-            <img src="/images/dummy_profile_photo-2.webp" alt="Profile" className="w-full h-full object-cover" />
+            <Image
+              src="/images/dummy_profile_photo-2.webp"
+              alt="Profile"
+              width={256}
+              height={256}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </main>
@@ -100,7 +113,7 @@ export default function Home() {
       <div className="hidden md:block absolute bottom-4 right-4 gap-2 opacity-65">
         <div className="flex items-center">
           <span className="font-medium">Built on</span>
-          <img src="/images/lens-logo.svg" className="h-5 inline ml-2" alt="Lens logo" />
+          <Image src="/images/lens-logo.svg" width={80} height={20} className="h-5 inline ml-2" alt="Lens logo" />
         </div>
       </div>
     </div>

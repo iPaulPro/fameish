@@ -1,4 +1,4 @@
-import { createContext, FC, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, FC, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { useModal } from "connectkit";
 import {
@@ -108,20 +108,61 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
     environment: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? testnet : mainnet,
   });
 
+  const updateAccount = useCallback(async () => {
+    if (!lensUser) return;
+    const accountResult = await fetchAccount(lensClient, {
+      address: lensUser.address,
+    });
+    if (accountResult.isErr()) {
+      console.error("Error fetching account", accountResult.error);
+      setError(new Error("Error fetching account"));
+      return;
+    }
+    setAccount(accountResult.value);
+  }, [lensClient, lensUser]);
+
+  const updateAccountsAvailable = useCallback(
+    async (address: string | undefined = lensUser?.signer) => {
+      if (!address) {
+        setAccountsAvailable([]);
+        return;
+      }
+
+      const accountsRes = await fetchAccountsAvailable(lensClient, {
+        managedBy: evmAddress(address),
+      });
+
+      if (accountsRes.isErr()) {
+        setError(new Error("Error fetching managed accounts"));
+        setAccountsAvailable([]);
+        console.error("Error fetching managed accounts");
+        return;
+      }
+
+      const accounts = accountsRes.value;
+      if (!accounts?.items) {
+        setError(new Error("No accounts available"));
+        setAccountsAvailable([]);
+        console.error("No accounts available");
+        return;
+      }
+
+      setAccountsAvailable([...accounts.items]);
+    },
+    [lensUser?.signer],
+  );
+
   useEffect(() => {
     if (isLoading || account || !lensUser) return;
-    updateAccount().catch(e => {
-      console.error("Error fetching account:", e);
-      setError(e);
-    });
-  }, [isLoading, lensUser, account]);
+    updateAccount();
+  }, [isLoading, lensUser, account, updateAccount]);
 
   useEffect(() => {
     updateAccountsAvailable(walletAddress).catch(e => {
       console.error("Error fetching available accounts:", e);
       setError(e);
     });
-  }, [walletAddress]);
+  }, [walletAddress, updateAccountsAvailable]);
 
   useEffect(() => {
     setIsLoading(isConnecting || loginLoading || sessionLoading || logoutLoading || userLoading);
@@ -232,47 +273,6 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
     }
     setAccount(null);
     setAccountsAvailable([]);
-  };
-
-  const updateAccount = async () => {
-    if (!lensUser) return;
-    const accountResult = await fetchAccount(lensClient, {
-      address: lensUser.address,
-    });
-    if (accountResult.isErr()) {
-      console.error("Error fetching account", accountResult.error);
-      setError(new Error("Error fetching account"));
-      return;
-    }
-    setAccount(accountResult.value);
-  };
-
-  const updateAccountsAvailable = async (address: string | undefined = lensUser?.signer) => {
-    if (!address) {
-      setAccountsAvailable([]);
-      return;
-    }
-
-    const accountsRes = await fetchAccountsAvailable(lensClient, {
-      managedBy: evmAddress(address),
-    });
-
-    if (accountsRes.isErr()) {
-      setError(new Error("Error fetching managed accounts"));
-      setAccountsAvailable([]);
-      console.error("Error fetching managed accounts");
-      return;
-    }
-
-    const accounts = accountsRes.value;
-    if (!accounts?.items) {
-      setError(new Error("No accounts available"));
-      setAccountsAvailable([]);
-      console.error("No accounts available");
-      return;
-    }
-
-    setAccountsAvailable([...accounts.items]);
   };
 
   const refresh = async () => {

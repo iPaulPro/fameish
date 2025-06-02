@@ -7,7 +7,7 @@ import { User } from "@/lib/db/tables";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FaCheckCircle, FaUserCircle } from "react-icons/fa";
 import { evmAddress } from "@lens-protocol/react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useLensSession } from "@/hooks/LensSessionProvider";
 import { truncateAddress } from "@/lib/utils";
 import { Separator } from "@/src/components/ui/separator";
@@ -19,16 +19,19 @@ export default function Account() {
 
   const { account } = useLensSession();
 
-  const getUser = async (accountAddress: EvmAddress) => {
-    const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
-    const { data } = await userQuery;
-    return data as User;
-  };
+  const getUser = useCallback(
+    async (accountAddress: EvmAddress) => {
+      const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
+      const { data } = await userQuery;
+      return data as User;
+    },
+    [supabase],
+  );
 
   useEffect(() => {
     if (!account) return;
     getUser(evmAddress(account.address));
-  }, [account]);
+  }, [account, getUser]);
 
   return (
     <div className="w-full flex-grow flex flex-col">
