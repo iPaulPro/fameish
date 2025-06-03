@@ -12,8 +12,6 @@ import {
   useLogin,
   useLogout,
   useSessionClient,
-  mainnet,
-  testnet,
 } from "@lens-protocol/react";
 import { fetchAccount, fetchAccountsAvailable } from "@lens-protocol/client/actions";
 import config from "@/src/config";

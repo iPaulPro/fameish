@@ -1,5 +1,4 @@
 import { createPublicClient, http } from "viem";
-import { chains } from "@lens-chain/sdk/viem";
 import config from "@/src/config";
 
 const CHAIN_NAME = config.lens.isTestnet ? "sepolia" : "mainnet";
