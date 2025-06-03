@@ -33,6 +33,21 @@ export const metadata: Metadata = {
   icons: {
     icon: "/images/fameish-icon.svg",
   },
+  openGraph: {
+    title: "Fameish",
+    description: "Become the most-followed person on Lens, for a day",
+    url: "https://fameish.day",
+    siteName: "Fameish",
+    images: [
+      {
+        url: "https://fameish.day/images/og-image.webp",
+        width: 1500,
+        height: 768,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
