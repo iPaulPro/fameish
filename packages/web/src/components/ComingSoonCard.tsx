@@ -61,7 +61,17 @@ export default function ComingSoonCard() {
           <div className="flex flex-col items-center justify-center h-full text-4xl font-hero pt-10 sm:pt-16">
             <CountUp to={userCount} duration={1} className="font-semibold text-balance text-4xl sm:text-7xl"></CountUp>
             <span className="opacity-45 text-sm sm:text-lg">users joined so far</span>
-            <Button variant="outline" size="lg" className="mt-4 hidden md:block">
+            <Button
+              variant="outline"
+              size="lg"
+              className="mt-4 hidden md:block"
+              onClick={() =>
+                window.open(
+                  `https://hey.xyz/?text=Want to be the most followed account on Lens? Check out Fameish!%0A %0A %0AEach day one member is chosen to be followed by all other users.%0A%0A%0ASign up for free at https://fameish.day`,
+                  "_blank",
+                )
+              }
+            >
               Share on Lens
             </Button>
           </div>
