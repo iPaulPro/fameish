@@ -55,13 +55,12 @@ const SemiCircleProgressBar: FC<SemiCircleProgressBarProps> = ({
 
   // On mount and whenever dashOffset changes, push the state to dashOffset.
   useEffect(() => {
-    if (animate) {
-      // Defer to next tick so there's always a transition from initial to dashOffset
-      const id = requestAnimationFrame(() => {
-        setAnimatedOffset(dashOffset);
-      });
-      return () => cancelAnimationFrame(id);
-    }
+    if (!animate) return;
+    // Defer to the next frame so that transition:stroke-dashoffset takes effect
+    const id = requestAnimationFrame(() => {
+      setAnimatedOffset(dashOffset);
+    });
+    return () => cancelAnimationFrame(id);
   }, [dashOffset, animate]);
 
   // Gradient ID
@@ -73,10 +72,33 @@ const SemiCircleProgressBar: FC<SemiCircleProgressBarProps> = ({
   return (
     <svg className={className} width="100%" viewBox={`0 0 ${vbWidth} ${vbHeight}`} preserveAspectRatio="xMidYMid meet">
       <defs>
-        <linearGradient id={gradientId} x1="0%" y1="100%" x2="100%" y2="0%">
-          {/* Animate x1 from 0% → 10% → 0% over 6s (loop), and x2 from 100% → 90% → 100%. */}
-          <animate attributeName="x1" values="0%;50%;0%" dur="6s" repeatCount="indefinite" />
-          <animate attributeName="x2" values="100%;50%;100%" dur="6s" repeatCount="indefinite" />
+        {/**
+         * We keep x1="0%" y1="100%" x2="100%" y2="0%" fixed,
+         * and instead animate gradientTransform so it slides smoothly.
+         */}
+        <linearGradient
+          id={gradientId}
+          x1="0%"
+          y1="100%"
+          x2="100%"
+          y2="0%"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(0, 0)"
+        >
+          {/**
+           * animateTransform will slide the gradient left→right→left over 6s
+           * without any “jump” at the loop boundary.
+           * We translate by ±10 units in viewBox space (200×100).
+           */}
+          <animateTransform
+            attributeName="gradientTransform"
+            type="translate"
+            values="0,0; 50,0; 0,0"
+            keyTimes="0;0.5;1"
+            calcMode="linear"
+            dur="6s"
+            repeatCount="indefinite"
+          />
 
           <stop offset="0%" stopColor="rgba(198, 255, 100, 0.75)" />
           <stop offset="50%" stopColor="rgba(255, 160, 80, 0.75)" />

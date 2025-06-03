@@ -49,8 +49,12 @@ function ConnectWalletMessage() {
       <div className="flex justify-center pb-2">
         <Lottie animationData={usersAnimation} className="w-24 h-24" />
       </div>
-      <span className="text-2xl font-medium pb-2">Every day, one user is chosen to be followed by all other users</span>
-      <span className="text-base opacity-65 pr-6">The winner is automatically followed and unfollowed for you.</span>
+      <span className="text-2xl font-medium pb-2 text-center md:text-start">
+        Every day, one user is chosen to be followed by all other users
+      </span>
+      <span className="text-base opacity-65 pr-6 text-center md:text-start">
+        The winner is automatically followed and unfollowed for you.
+      </span>
     </div>
   );
 }
@@ -121,8 +125,8 @@ function LensAccountChooserMessage() {
       <div className="flex justify-center pb-2">
         <Lottie animationData={registerAnimation} className="w-24 h-24" />
       </div>
-      <span className="text-2xl font-medium">Choose your Lens account</span>
-      <span className="text-base opacity-65 pr-6">
+      <span className="text-2xl font-medium text-center md:text-start">Choose your Lens account</span>
+      <span className="text-base opacity-65 pr-6 text-center md:text-start">
         Accounts must have a Lens Score of{" "}
         {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!))} or greater to be
         eligible.
@@ -228,8 +232,8 @@ function AddAccountManagerMessage() {
       <div className="flex justify-center pb-2">
         <Lottie animationData={linkAnimation} className="w-24 h-24" />
       </div>
-      <span className="text-2xl font-medium">Grant permissions for Fameish</span>
-      <span className="text-base opacity-65 pr-6">
+      <span className="text-2xl font-medium text-center md:text-start">Grant permissions for Fameish</span>
+      <span className="text-base opacity-65 pr-6 text-center md:text-start">
         This allows us to follow and unfollow on your behalf. The Fameish Manager is{" "}
         <a href="https://github.com/iPaulPro/fameish" target="_blank">
           open source <FaExternalLinkAlt className="inline w-2 h-2" />
@@ -350,8 +354,8 @@ function CreateUserMessage() {
       <div className="flex justify-center pb-2">
         <Lottie animationData={moonwalkAnimation} className="w-24 h-24" />
       </div>
-      <span className="text-2xl font-medium">All set!</span>
-      <span className="text-base opacity-65 pr-6">
+      <span className="text-2xl font-medium text-center md:text-start">All set!</span>
+      <span className="text-base opacity-65 pr-6 text-center md:text-start">
         Creating your account will trigger a follow of today&apos;s winner and the{" "}
         <span className="font-semibold">@fameish</span> accounts, and make you eligible to win!
       </span>

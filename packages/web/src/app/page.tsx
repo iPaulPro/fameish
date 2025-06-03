@@ -30,7 +30,7 @@ export default function Home() {
           className="hidden md:block floating delay absolute md:top-[50rem] md:-left-8 lg:top-[50rem] lg:left-20
              xl:top-[50rem] xl:left-48 2xl:left-80"
         >
-          <div className="w-20 h-20 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-sm rotate-2">
             <Image
               src="/images/dummy_profile_photo-1.jpeg"
               alt="Profile"
@@ -63,7 +63,10 @@ export default function Home() {
           <div className="text-sm opacity-65 text-center pt-4">It&apos;s totally free to join and use.</div>
         </div>
         <div className="flex-none flex flex-col justify-end items-center">
-          <div className="bg-[#FFFFFFBD] backdrop-blur-2xl md:min-h-[28rem] w-full max-w-3xl rounded-t-3xl shadow-xl px-6 pt-8 md:pt-12">
+          <div
+            className="bg-[#FFFFFFBD] backdrop-blur-2xl md:min-h-[28rem] w-full max-w-3xl rounded-t-3xl shadow-2xl
+               px-6 pt-8 md:pt-12"
+          >
             {isWinnerLoading ? (
               <div className="flex h-full items-center justify-center">
                 <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
@@ -77,7 +80,7 @@ export default function Home() {
         </div>
         <div
           className="hidden md:block floating absolute md:top-[24rem] md:left-0 lg:top-96 lg:left-12
-             xl:top-96 xl:left-44 2xl:left-80"
+          xl:top-96 xl:left-44 2xl:left-80"
         >
           <div className="w-32 h-32 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg -rotate-6">
             <Image
@@ -93,7 +96,7 @@ export default function Home() {
           className="hidden md:block floating delay absolute md:top-[30rem] md:right-0 lg:top-[30rem] lg:right-16
              xl:top-[30rem] xl:right-48 2xl:right-80"
         >
-          <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
+          <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-xl rotate-2">
             <Image
               src="/images/dummy_profile_photo-2.webp"
               alt="Profile"

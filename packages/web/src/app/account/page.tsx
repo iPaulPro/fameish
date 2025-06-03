@@ -38,7 +38,10 @@ export default function Account() {
       <Header />
       <div className="flex-grow w-full h-full flex justify-center items-center -mt-10">
         <div className="bg-background rounded-2xl shadow-xl w-full max-w-4xl grid md:grid-cols-12 items-center overflow-hidden">
-          <div className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-6 from-neutral-50 bg-gradient-to-l order-2 md:order-1 rounded-l-xl border-t md:border-r border-neutral-100">
+          <div
+            className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-6 rounded-l-xl border-b
+            md:border-r border-neutral-100"
+          >
             {account ? (
               <div className="flex flex-col items-center gap-2">
                 <Avatar className="w-36 h-36">
@@ -57,7 +60,7 @@ export default function Account() {
               </div>
             )}
           </div>
-          <div className="md:min-h-96 md:col-span-7 p-6 md:p-12 order-1 md:order-2 flex flex-col gap-2">
+          <div className="md:min-h-96 md:col-span-7 p-6 md:p-12 flex flex-col gap-2 from-neutral-50 bg-gradient-to-l ">
             <div className="flex flex-col">
               <div className="text-2xl font-semibold text-secondary-foreground">Your account</div>
               <div className="text-sm opacity-65">Manage your account settings and preferences.</div>
