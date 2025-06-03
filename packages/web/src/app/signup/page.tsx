@@ -264,6 +264,8 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
       return;
     }
 
+    setIsSubmitting(true);
+
     // Call /me to trigger the session refresh
     await fetchMeDetails(client);
 
@@ -277,6 +279,7 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
       if (res.isErr()) {
         console.error("createUser: Error following Fameish account:", res.error);
         setError("Error following Fameish account");
+        setIsSubmitting(false);
         return;
       }
     }
@@ -285,15 +288,16 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
     if (creds.isErr()) {
       console.error("createUser: Error getting credentials:", creds.error);
       setError("Error getting credentials");
+      setIsSubmitting(false);
       return;
     }
 
     if (!creds.value) {
       setError("No credentials found");
+      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const res = await fetch("/api/user", {
         method: "POST",
