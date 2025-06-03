@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { Roboto, Geist_Mono, Martian_Mono, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import Providers from "@/app/providers";
+import { Analytics } from "@vercel/analytics/next";
 
 const robotoSans = Roboto({
   variable: "--font-roboto-sans",
@@ -45,7 +46,10 @@ export default function RootLayout({
         className={`${robotoSans.variable} ${geistMono.variable} ${limelight.variable} ${hero.variable} antialiased`}
       >
         <div className="min-h-full gradient-bg font-sans flex flex-col">
-          <Providers>{children}</Providers>
+          <Providers>
+            {children}
+            <Analytics />
+          </Providers>
         </div>
       </body>
     </html>
