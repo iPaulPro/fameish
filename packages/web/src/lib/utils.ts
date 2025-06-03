@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export const ZeroAddress = "0x0000000000000000000000000000000000000000";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

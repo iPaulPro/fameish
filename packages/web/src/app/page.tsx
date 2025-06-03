@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { LuChevronRight, LuLoader } from "react-icons/lu";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, ZeroAddress } from "@/lib/utils";
 import Header from "@/components/Header";
 import { useReadContract } from "wagmi";
 import { fameishAbi } from "@/lib/abis/fameish";
@@ -49,10 +49,14 @@ export default function Home() {
               <div className="flex flex-grow items-center justify-center h-96">
                 <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
               </div>
-            ) : winnerAddress ? (
+            ) : winnerAddress && winnerAddress !== ZeroAddress ? (
               <LandingCard winnerAddress={winnerAddress} />
             ) : (
-              <></>
+              <>
+                <div className="flex flex-grow items-center justify-center h-96">
+                  <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -10,6 +10,7 @@ import { lensClient } from "@/lib/lens/client";
 import { Account } from "@lens-protocol/react";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { LuLoader } from "react-icons/lu";
+import { ZeroAddress } from "@/lib/utils";
 
 type LandingCardProps = {
   winnerAddress: string;
@@ -70,7 +71,8 @@ export default function LandingCard({ winnerAddress }: LandingCardProps) {
           <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
         </div>
       ) : (
-        drawingTimestamp && (
+        drawingTimestamp &&
+        drawingTimestamp > 0 && (
           <div className="flex flex-col items-center gap-2">
             <div className="text-lg opacity-45 font-medium">Next winner selected in</div>
             <AnimatedCountdownClock targetDate={new Date(Number(drawingTimestamp) * 1000 + 86400000)} />
@@ -78,7 +80,7 @@ export default function LandingCard({ winnerAddress }: LandingCardProps) {
         )
       )}
 
-      {winnerAccount && (
+      {winnerAccount && winnerAccount?.address !== ZeroAddress && (
         <div className="flex flex-col items-center gap-2">
           <div className="text-lg opacity-45 font-medium pt-2">Today&apos;s winner</div>
 

@@ -44,7 +44,7 @@ export default function Header({ showLinks }: HeaderProps) {
         </nav>
       ) : (
         <div className="hidden md:block">
-          {drawingTimestamp && (
+          {drawingTimestamp !== undefined && drawingTimestamp > 0 && (
             <AnimatedCountdownClock
               textClassName="!text-xl opacity-65"
               animationEnabled={false}
