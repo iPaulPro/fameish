@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
-import { Roboto, Geist_Mono, Damion, Martian_Mono, Inter_Tight } from "next/font/google";
+import { Roboto, Geist_Mono, Martian_Mono, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import Providers from "@/app/providers";
 
@@ -11,12 +11,6 @@ const robotoSans = Roboto({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const damion = Damion({
-  weight: "400",
-  variable: "--font-damion",
   subsets: ["latin"],
 });
 
@@ -48,9 +42,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${robotoSans.variable} ${geistMono.variable} ${damion.variable} ${limelight.variable} ${hero.variable} antialiased`}
+        className={`${robotoSans.variable} ${geistMono.variable} ${limelight.variable} ${hero.variable} antialiased`}
       >
-        <div className="min-h-screen gradient-bg font-sans flex flex-col">
+        <div className="min-h-full gradient-bg font-sans flex flex-col">
           <Providers>{children}</Providers>
         </div>
       </body>

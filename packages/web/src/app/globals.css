@@ -13,7 +13,7 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: oklch(0.90 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -40,7 +40,6 @@
   /* these are set in layout.tsx */
   --font-roboto-sans: "";
   --font-geist-mono: "";
-  --font-damion: "";
   --font-limelight: "";
   --font-hero: "";
 }
@@ -50,7 +49,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-roboto-sans);
   --font-mono: var(--font-geist-mono);
-  --font-damion: var(--font-damion);
   --font-limelight: var(--font-limelight);
   --font-hero: var(--font-hero);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -135,7 +133,7 @@
 }
 
 html, body {
-  height: 100%;
+  height: 100dvh;
 }
 
 .gradient-bg {

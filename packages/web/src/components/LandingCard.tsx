@@ -65,7 +65,7 @@ export default function LandingCard({ winnerAddress }: LandingCardProps) {
   }, [updateUserCount]);
 
   return (
-    <div className="flex flex-col items-center gap-2 min-h-96">
+    <div className="flex flex-col items-center gap-2 pb-8">
       {isTimestampLoading ? (
         <div className="flex flex-grow items-center justify-center h-16">
           <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />

@@ -9,6 +9,7 @@ import { useReadContract } from "wagmi";
 import { fameishAbi } from "@/lib/abis/fameish";
 import LandingCard from "@/components/LandingCard";
 import Image from "next/image";
+import ComingSoonCard from "@/components/ComingSoonCard";
 
 export default function Home() {
   const { data: winnerAddress, isLoading: isWinnerLoading } = useReadContract({
@@ -18,11 +19,26 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen relative flex flex-col">
+    <div className="flex-grow relative flex flex-col">
       <Header showLinks={true} />
 
       <main className="container flex-grow mx-auto px-4 pt-8 md:pt-24 relative flex flex-col">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto pb-8 md:pb-12">
+        <div
+          className="hidden md:block floating delay absolute md:top-[50rem] md:-left-8 lg:top-[50rem] lg:left-20
+             xl:top-[50rem] xl:left-48 2xl:left-80"
+        >
+          <div className="w-20 h-20 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg rotate-2">
+            <Image
+              src="/images/dummy_profile_photo-1.jpeg"
+              alt="Profile"
+              width={256}
+              height={256}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col flex-grow items-center justify-center text-center max-w-4xl mx-auto pb-8 md:pb-12">
           <h1
             className="text-3xl md:text-[4rem] lg:text-[4.5rem] xl:text-[5rem] font-medium font-hero
            leading-10 md:leading-20 tracking-tighter mb-8 text-balance"
@@ -38,31 +54,27 @@ export default function Home() {
             )}
           >
             Sign up
-            <LuChevronRight strokeWidth={4} className="signup-icon ml-2 h-5 w-5 scale-x-200 text-accent" />
+            <LuChevronRight strokeWidth={4} className="signup-icon ml-1 h-5 w-5 scale-x-200 text-accent" />
           </Link>
 
           <div className="text-sm opacity-65 text-center pt-4">It&apos;s totally free to join and use.</div>
         </div>
-        <div className="flex-grow flex flex-col justify-end items-center">
-          <div className="bg-[#FFFFFFBD] backdrop-blur-2xl w-full max-w-3xl rounded-t-3xl shadow-xl px-6 py-8 md:py-12">
+        <div className="flex-none flex flex-col justify-end items-center">
+          <div className="bg-[#FFFFFFBD] backdrop-blur-2xl md:min-h-[28rem] w-full max-w-3xl rounded-t-3xl shadow-xl px-6 pt-8 md:pt-12">
             {isWinnerLoading ? (
-              <div className="flex flex-grow items-center justify-center h-96">
+              <div className="flex h-full items-center justify-center">
                 <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
               </div>
             ) : winnerAddress && winnerAddress !== ZeroAddress ? (
               <LandingCard winnerAddress={winnerAddress} />
             ) : (
-              <>
-                <div className="flex flex-grow items-center justify-center h-96">
-                  <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
-                </div>
-              </>
+              <ComingSoonCard />
             )}
           </div>
         </div>
         <div
           className="hidden md:block floating absolute md:top-[24rem] md:left-0 lg:top-96 lg:left-12
-             xl:top-96 xl:left-40 2xl:left-80"
+             xl:top-96 xl:left-44 2xl:left-80"
         >
           <div className="w-32 h-32 rounded-full overflow-hidden border-8 border-white bg-neutral-300 shadow-lg -rotate-6">
             <Image
@@ -89,6 +101,7 @@ export default function Home() {
           </div>
         </div>
       </main>
+
       <div className="hidden md:block absolute bottom-4 left-4">
         <div className="flex items-center gap-4">
           <a href="https://hey.xyz/u/fameish" target="_blank" rel="noreferrer" className="opacity-65 hover:opacity-100">
@@ -114,6 +127,7 @@ export default function Home() {
           </a>
         </div>
       </div>
+
       <div className="hidden md:block absolute bottom-4 right-4 gap-2 opacity-65">
         <div className="flex items-center">
           <span className="font-medium">Built on</span>
