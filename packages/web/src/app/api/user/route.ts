@@ -7,9 +7,8 @@ import { getContract } from "@/lib/lens/contracts";
 import { fameishAbi } from "@/lib/abis/fameish";
 import { fetchAccount } from "@lens-protocol/client/actions";
 import { lensClient } from "@/lib/lens/server";
-import { encodeFunctionData } from "viem";
 import { walletClient } from "@/lib/viem/walletClient";
-import { privateKeyToAccount } from "viem/accounts";
+import { ZeroAddress } from "@/lib/utils";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 
@@ -34,7 +33,6 @@ export async function POST(req: Request) {
   try {
     const JWKS = createRemoteJWKSet(new URL(jwksUri));
     const { payload } = await jwtVerify(token, JWKS);
-    console.log("POST /user : JWT payload", payload);
     const { sub: signer, act } = payload;
 
     if (act && typeof act === "string" && accountAddress.toLowerCase() !== act.toLowerCase()) {
@@ -81,7 +79,7 @@ export async function POST(req: Request) {
           address: accountAddress,
           abi: accountAbi,
           functionName: "canExecuteTransactions",
-          args: [process.env.NEXT_PUBLIC_LENS_ACCOUNT_MANAGER_ADDRESS! as `0x${string}`],
+          args: [process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`],
         },
       ],
     });
@@ -116,6 +114,7 @@ export async function POST(req: Request) {
       abi: fameishAbi,
       functionName: "winner",
     });
+    const winnerExists = winnerAccount && winnerAccount !== ZeroAddress;
 
     const isFollowing = await publicClient.multicall({
       contracts: [
@@ -123,75 +122,43 @@ export async function POST(req: Request) {
           address: getContract("LensGlobalGraph").address,
           abi: graphAbi,
           functionName: "isFollowing",
-          args: [accountAddress, winnerAccount],
+          args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`],
         },
         {
           address: getContract("LensGlobalGraph").address,
           abi: graphAbi,
           functionName: "isFollowing",
-          args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`],
+          args: [accountAddress, winnerAccount],
         },
       ],
     });
 
-    if (isFollowing[0].error || isFollowing[1].error) {
+    if (isFollowing[0].error || (winnerExists && isFollowing[1].error)) {
       return new Response("Unable to get follow status", {
         status: 500,
       });
     }
 
-    const followCalls: {
-      target: `0x${string}`;
-      value: bigint;
-      data: `0x${string}`;
-    }[] = [];
+    // Ensure the account is following the Fameish account
+    if (!isFollowing[0].result) {
+      return new Response("Not following Fameish account", {
+        status: 500,
+      });
+    }
 
     // Ensure the account is following the winning account
-    if (!isFollowing[0].result) {
-      const followWinnerData = encodeFunctionData({
-        abi: graphAbi,
-        functionName: "follow",
-        args: [accountAddress, winnerAccount, [], [], [], []],
-      });
-      followCalls.push({
-        target: getContract("LensGlobalGraph").address,
-        value: 0n,
-        data: followWinnerData,
-      });
-    }
-
-    // Ensure the account is following the Fameish account
-    if (!isFollowing[1].result) {
-      const followFameishData = encodeFunctionData({
-        abi: graphAbi,
-        functionName: "follow",
-        args: [accountAddress, process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`, [], [], [], []],
-      });
-      followCalls.push({
-        target: getContract("LensGlobalGraph").address,
-        value: 0n,
-        data: followFameishData,
-      });
-    }
-
-    console.log("executeTransactions with client", walletClient.account.address);
-
-    if (followCalls.length) {
+    if (winnerExists && !isFollowing[1].result) {
       try {
-        const accountManagerAccount = privateKeyToAccount(
-          process.env.LENS_ACCOUNT_MANAGER_PRIVATE_KEY! as `0x${string}`,
-        );
-        const { request } = await publicClient.simulateContract({
-          account: accountManagerAccount,
-          address: accountAddress,
-          abi: accountAbi,
-          functionName: "executeTransactions",
-          args: [followCalls],
+        const { request } = await walletClient.simulateContract({
+          address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
+          abi: fameishAbi,
+          functionName: "bulkFollow",
+          args: [[accountAddress]],
         });
         await walletClient.writeContract(request);
       } catch (e) {
         console.error(e);
-        return new Response("Failed to follow accounts", {
+        return new Response("Failed to follow wining account", {
           status: 500,
         });
       }

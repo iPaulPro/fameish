@@ -1,46 +1,53 @@
 export const fameishAbi = [
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_accountManager",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_lensGraph",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_fameishRandomAddress",
-        type: "address",
-      },
-    ],
+    inputs: [],
     stateMutability: "nonpayable",
     type: "constructor",
   },
   {
     inputs: [],
-    name: "InvalidAccountParams",
+    name: "InvalidAccount",
     type: "error",
   },
   {
     inputs: [],
-    name: "InvalidConstructorParams",
+    name: "InvalidInitializers",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidParams",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "WinnerNotSet",
     type: "error",
   },
   {
     anonymous: false,
     inputs: [
       {
-        indexed: true,
+        indexed: false,
+        internalType: "uint8",
+        name: "version",
+        type: "uint8",
+      },
+    ],
+    name: "Initialized",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
         internalType: "uint256",
         name: "randomIndex",
         type: "uint256",
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "string",
         name: "followerListURI",
         type: "string",
@@ -136,11 +143,35 @@ export const fameishAbi = [
       {
         indexed: true,
         internalType: "address",
-        name: "winner",
+        name: "oldWinner",
         type: "address",
       },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "oldWinnerTotalFollows",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "oldWinnerTotalUnfollows",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newWinner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "string",
+        name: "followerListURI",
+        type: "string",
+      },
     ],
-    name: "WinnerSet",
+    name: "WinnerChanged",
     type: "event",
   },
   {
@@ -172,7 +203,7 @@ export const fameishAbi = [
   {
     inputs: [
       {
-        internalType: "address payable[]",
+        internalType: "contract IAccount[]",
         name: "_followers",
         type: "address[]",
       },
@@ -185,7 +216,7 @@ export const fameishAbi = [
   {
     inputs: [
       {
-        internalType: "address payable[]",
+        internalType: "contract IAccount[]",
         name: "_followers",
         type: "address[]",
       },
@@ -309,11 +340,39 @@ export const fameishAbi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_admin",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_accountManager",
+        type: "address",
+      },
+      {
+        internalType: "contract IGraph",
+        name: "_lensGraph",
+        type: "address",
+      },
+      {
+        internalType: "contract FameishRandom",
+        name: "_fameishRandom",
+        type: "address",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "lensGraph",
     outputs: [
       {
-        internalType: "contract Graph",
+        internalType: "contract IGraph",
         name: "",
         type: "address",
       },

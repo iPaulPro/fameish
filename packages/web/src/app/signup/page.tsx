@@ -2,11 +2,11 @@
 
 import { Button } from "@/src/components/ui/button";
 import { useLensSession } from "@/hooks/LensSessionProvider";
-import { Account, evmAddress } from "@lens-protocol/react";
+import { Account, evmAddress, useAccount } from "@lens-protocol/react";
 import { useReadContract, useSwitchChain, useWalletClient } from "wagmi";
 import { accountAbi } from "@/lib/abis/account";
 import { EvmAddress } from "@lens-protocol/client";
-import { addAccountManager, fetchMeDetails } from "@lens-protocol/client/actions";
+import { addAccountManager, fetchMeDetails, follow } from "@lens-protocol/client/actions";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { User } from "@/lib/db/tables";
 import { createSupabaseClient } from "@/lib/supabase/client";
@@ -19,7 +19,7 @@ import moonwalkAnimation from "@/lib/anim/anim_moonwalk.json";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LuArrowRight, LuKey, LuLoader, LuShieldBan } from "react-icons/lu";
-import { FaUserCircle } from "react-icons/fa";
+import { FaExternalLinkAlt, FaUserCircle } from "react-icons/fa";
 import config from "@/src/config";
 import { CiUser } from "react-icons/ci";
 import { useRouter } from "next/navigation";
@@ -230,7 +230,11 @@ function AddAccountManagerMessage() {
       </div>
       <span className="text-2xl font-medium">Grant permissions for Fameish</span>
       <span className="text-base opacity-65 pr-6">
-        This allows us to follow and unfollow on your behalf. The Fameish Manager never has access to your tokens.
+        This allows us to follow and unfollow on your behalf. The Fameish Manager is{" "}
+        <a href="https://github.com/iPaulPro/fameish" target="_blank">
+          open source <FaExternalLinkAlt className="inline w-2 h-2" />
+        </a>{" "}
+        and never has access to your tokens.
       </span>
     </>
   );
@@ -239,10 +243,20 @@ function AddAccountManagerMessage() {
 function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
   const [, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFollowingFameish, setIsFollowingFameish] = useState(false);
 
   const { client } = useLensSession();
-
+  const { data: walletClient } = useWalletClient();
   const router = useRouter();
+
+  const { data: fameishAccount } = useAccount({
+    address: process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS! as `0x${string}`,
+  });
+
+  useEffect(() => {
+    if (!fameishAccount) return;
+    setIsFollowingFameish(fameishAccount.operations?.isFollowedByMe == true);
+  }, [fameishAccount]);
 
   const handleCreateUser = async () => {
     if (!client) {
@@ -252,6 +266,20 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
 
     // Call /me to trigger the session refresh
     await fetchMeDetails(client);
+
+    if (!isFollowingFameish) {
+      const res = await follow(client, {
+        account: evmAddress(process.env.NEXT_PUBLIC_LENS_FAMEISH_ACCOUNT_ADDRESS!),
+      })
+        .andThen(handleOperationWith(walletClient))
+        .andThen(client.waitForTransaction);
+
+      if (res.isErr()) {
+        console.error("createUser: Error following Fameish account:", res.error);
+        setError("Error following Fameish account");
+        return;
+      }
+    }
 
     const creds = client.getCredentials();
     if (creds.isErr()) {
