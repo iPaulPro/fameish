@@ -1,9 +1,10 @@
 import { createPublicClient, http } from "viem";
 import { chains } from "@lens-chain/sdk/viem";
+import config from "@/src/config";
 
-const CHAIN_NAME = process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? "sepolia" : "mainnet";
+const CHAIN_NAME = config.lens.isTestnet ? "sepolia" : "mainnet";
 
 export default createPublicClient({
-  chain: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? chains.testnet : chains.mainnet,
+  chain: config.lens.chain,
   transport: http(`https://lens-${CHAIN_NAME}.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`),
 });

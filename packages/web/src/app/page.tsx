@@ -16,6 +16,9 @@ export default function Home() {
     address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
     abi: fameishAbi,
     functionName: "winner",
+    query: {
+      retry: false,
+    },
   });
 
   return (

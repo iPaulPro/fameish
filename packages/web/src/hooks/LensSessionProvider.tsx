@@ -105,7 +105,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   const { data: lensUser, loading: userLoading } = useAuthenticatedUser();
 
   const lensClient = PublicClient.create({
-    environment: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? testnet : mainnet,
+    environment: config.lens.environment,
   });
 
   const updateAccount = useCallback(async () => {
