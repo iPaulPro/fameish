@@ -10,11 +10,13 @@ interface Config {
   };
 }
 
+const isTestnet = process.env.NEXT_PUBLIC_LENS_USE_TESTNET === "true";
+
 const config: Config = {
   lens: {
-    isTestnet: Boolean(process.env.NEXT_PUBLIC_LENS_USE_TESTNET),
-    environment: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? testnet : mainnet,
-    chain: process.env.NEXT_PUBLIC_LENS_USE_TESTNET ? chains.testnet : chains.mainnet,
+    isTestnet,
+    environment: isTestnet ? testnet : mainnet,
+    chain: isTestnet ? chains.testnet : chains.mainnet,
   },
 };
 
