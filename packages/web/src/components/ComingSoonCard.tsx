@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import CountUp from "@/components/CountUp";
 
 export default function ComingSoonCard() {
+  const minUserCount = Number(process.env.NEXT_PUBLIC_LENS_USER_COUNT_MIN!);
   const [userCount, setUserCount] = useState<number>(0);
 
   const supabase = createSupabaseClient();
 
-  const handleRecordUpdated = (payload: any) => {
+  const handleRecordUpdated = (payload: { new: { count: number } }) => {
     console.log("Record updated:", payload);
     if (payload.new.count) {
       setUserCount(payload.new.count);
@@ -29,7 +30,7 @@ export default function ComingSoonCard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [supabase]);
 
   const updateUserCount = useCallback(async () => {
     const { data, error } = await supabase.from("record_count").select().eq("table_name", "user").limit(1).single();
@@ -50,12 +51,12 @@ export default function ComingSoonCard() {
     <div className="flex flex-col items-center flex-none justify-between">
       <div className="flex flex-col items-center gap-2 pb-8">
         <span className="text-xl sm:text-[1.7rem] font-medium md:px-24 text-center text-balance">
-          The first winner will be selected once <span className="font-black">1000</span> users have joined!
+          The first winner will be selected once <span className="font-black">{minUserCount}</span> users have joined!
         </span>
         <span className="opacity-45">Then the 24-hour cycle will begin</span>
       </div>
       <div className="w-full sm:px-12 relative flex flex-col items-end">
-        <SemiCircleProgressBar max={1000} value={userCount} thickness={20} className="w-full" />
+        <SemiCircleProgressBar max={minUserCount} value={userCount} thickness={20} className="w-full" />
         <div className="absolute inset-0">
           <div className="flex flex-col items-center justify-center h-full text-4xl font-hero pt-10 sm:pt-16">
             <CountUp to={userCount} duration={1} className="font-semibold text-balance text-4xl sm:text-7xl"></CountUp>
