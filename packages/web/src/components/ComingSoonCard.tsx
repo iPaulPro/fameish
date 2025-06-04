@@ -67,7 +67,7 @@ export default function ComingSoonCard() {
               className="mt-4 hidden md:block"
               onClick={() =>
                 window.open(
-                  `https://hey.xyz/?text=Want to be the most followed account on Lens? Check out Fameish!%0A %0A %0AEach day one member is chosen to be followed by all other users.%0A%0A%0ASign up for free at https://fameish.day`,
+                  `https://hey.xyz/?text=Want to be the most followed account on Lens? Check out Fameish!%0A%0AEach day one member is chosen to be followed by all other users for 24 hours. Sign up for free now!&url=https://fameish.day`,
                   "_blank",
                 )
               }
