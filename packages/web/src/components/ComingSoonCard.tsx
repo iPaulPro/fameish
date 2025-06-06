@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import SemiCircleProgressBar from "@/components/SemiCircleProgressBar";
 import { Button } from "@/components/ui/button";
 import CountUp from "@/components/CountUp";
+import { track } from "@vercel/analytics";
 
 export default function ComingSoonCard() {
   const minUserCount = Number(process.env.NEXT_PUBLIC_LENS_USER_COUNT_MIN!);
@@ -47,6 +48,9 @@ export default function ComingSoonCard() {
     updateUserCount();
   }, [updateUserCount]);
 
+  const shareText = `Want to be the most followed account on Lens? Check out **Fameish**!
+  %0A%0AEach day one member is chosen to be followed by all other users for 24 hours. Sign up for free now!`;
+
   return (
     <div className="flex flex-col items-center flex-none justify-between">
       <div className="flex flex-col items-center gap-2 pb-8">
@@ -65,12 +69,10 @@ export default function ComingSoonCard() {
               variant="outline"
               size="lg"
               className="mt-4 hidden md:block"
-              onClick={() =>
-                window.open(
-                  `https://hey.xyz/?text=Want to be the most followed account on Lens? Check out Fameish!%0A%0AEach day one member is chosen to be followed by all other users for 24 hours. Sign up for free now!&url=https://fameish.day`,
-                  "_blank",
-                )
-              }
+              onClick={() => {
+                track("Click", { name: "Share on Lens", location: "Home" });
+                window.open(`https://hey.xyz/?text=${shareText}&url=https://fameish.day`, "_blank");
+              }}
             >
               Share on Lens
             </Button>

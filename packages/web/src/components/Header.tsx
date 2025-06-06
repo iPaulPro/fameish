@@ -6,12 +6,14 @@ import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
 import { useReadContract } from "wagmi";
 import { fameishAbi } from "@/lib/abis/fameish";
 import Image from "next/image";
+import { track } from "@vercel/analytics";
 
 type HeaderProps = {
   showLinks?: boolean;
+  showAccount?: boolean;
 };
 
-export default function Header({ showLinks }: HeaderProps) {
+export default function Header({ showLinks, showAccount = true }: HeaderProps) {
   const { walletAddress, lensUser, logOut } = useLensSession();
 
   const router = useRouter();
@@ -30,17 +32,31 @@ export default function Header({ showLinks }: HeaderProps) {
   return (
     <header className="w-full px-6 py-4 grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center">
       <Link href="/" className={`${!showLinks && "md:opacity-45"}`}>
-        <Image src="images/fameish-logo.svg" alt="Fameish logo" width={1454} height={367} className="h-7 w-auto" />
+        <Image src="/images/fameish-logo.svg" alt="Fameish logo" width={1454} height={367} className="h-7 w-auto" />
       </Link>
 
       {showLinks ? (
         <nav className="hidden md:flex items-center space-x-8">
-          <Link href="/signup" className="text-gray-700 hover:text-black">
+          <Button
+            variant="link"
+            className="text-gray-700 hover:text-black p-0"
+            onClick={() => {
+              track("Click", { name: "How it works", location: "Header" });
+              router.push("/signup");
+            }}
+          >
             How it works
-          </Link>
-          <Link href="#" className="text-gray-700 hover:text-black">
+          </Button>
+          <Button
+            variant="link"
+            className="text-gray-700 hover:text-black p-0"
+            onClick={() => {
+              track("Click", { name: "Terms of service", location: "Header" });
+              router.push("/p/terms");
+            }}
+          >
             Terms of service
-          </Link>
+          </Button>
         </nav>
       ) : (
         <div className="hidden md:block">
@@ -55,30 +71,32 @@ export default function Header({ showLinks }: HeaderProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-x-6">
-        {lensUser ? (
-          showLinks ? (
-            <Link href="/account" className="font-medium">
-              Account
-            </Link>
+      {showAccount && (
+        <div className="flex items-center justify-end gap-x-6">
+          {lensUser ? (
+            showLinks ? (
+              <Link href="/account" className="font-medium">
+                Account
+              </Link>
+            ) : (
+              <Button variant="link" onClick={handleLogout} className="opacity-65 p-0">
+                Log out
+              </Button>
+            )
           ) : (
-            <Button variant="link" onClick={handleLogout} className="opacity-65 p-0">
-              Log out
+            showLinks && (
+              <Link href="/signup" className="font-medium">
+                Log in
+              </Link>
+            )
+          )}
+          {showLinks && !walletAddress && (
+            <Button onClick={() => router.push("/signup")} size="lg" className="hidden md:block font-medium">
+              Sign up
             </Button>
-          )
-        ) : (
-          showLinks && (
-            <Link href="/signup" className="font-medium">
-              Log in
-            </Link>
-          )
-        )}
-        {showLinks && !walletAddress && (
-          <Button onClick={() => router.push("/signup")} size="lg" className="hidden md:block font-medium">
-            Sign up
-          </Button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

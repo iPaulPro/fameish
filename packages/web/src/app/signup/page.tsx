@@ -24,6 +24,7 @@ import config from "@/src/config";
 import { CiUser } from "react-icons/ci";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { track } from "@vercel/analytics";
 
 function ConnectWalletSection() {
   const { connectWallet } = useLensSession();
@@ -63,7 +64,7 @@ function LensAccountChooserSection() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const { accountsAvailable, logIn, error } = useLensSession();
+  const { accountsAvailable, walletAddress, logIn, error } = useLensSession();
 
   useEffect(() => {
     if (error) {
@@ -77,6 +78,16 @@ function LensAccountChooserSection() {
     await logIn(account);
     setIsLoggingIn(false);
   };
+
+  useEffect(() => {
+    if (!accountsAvailable?.length || !walletAddress) return;
+    const eligibleAccounts = accountsAvailable.filter(
+      aa => aa.account.score >= Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!),
+    );
+    if (eligibleAccounts.length === 0) {
+      track("Ineligible User", { walletAddress });
+    }
+  }, [accountsAvailable]);
 
   return (
     <ScrollArea className=" w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
@@ -342,7 +353,8 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
         Create account
       </Button>
       <div className="text-xs opacity-65 text-center text-balance">
-        By creating an account you agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+        By creating an account you agree to the <a href="/p/terms">Terms of Service</a> and{" "}
+        <a href="/p/privacy">Privacy Policy</a>
       </div>
     </div>
   );
