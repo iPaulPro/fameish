@@ -1,4 +1,3 @@
-import { createRemoteJWKSet, jwtVerify } from "jose";
 import supabase from "@/lib/supabase/admin";
 import publicClient from "@/lib/viem/publicClient";
 import { accountAbi } from "@/lib/abis/account";
@@ -9,20 +8,69 @@ import { fetchAccount } from "@lens-protocol/client/actions";
 import { lensClient } from "@/lib/lens/server";
 import { walletClient } from "@/lib/viem/walletClient";
 import { ZeroAddress } from "@/lib/utils";
+import { NextResponse } from "next/server";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
+const JWKS = createRemoteJWKSet(new URL(jwksUri));
 
 export async function POST(req: Request) {
-  const token = req.headers.get("authorization")?.split(" ")[1];
+  let signer: string | null = null;
+  let act: string | null = null;
 
+  // when running in production, we verify the JWT and extract the signer and act in middleware
+  if (process.env.VERCEL_ENV === "production") {
+    if (process.env.MIDDLEWARE_SECRET !== req.headers.get("x-secret")) {
+      return new Response("Unauthorized", {
+        status: 401,
+      });
+    }
+
+    signer = req.headers.get("x-user-sub");
+    act = req.headers.get("x-user-act");
+
+    if (!signer || !act) {
+      return new Response("Unauthorized", {
+        status: 401,
+      });
+    }
+  }
+
+  const token = req.headers.get("authorization")?.split(" ")[1];
   if (!token) {
+    return new NextResponse("Unauthorized", {
+      status: 401,
+    });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    const { sub, act } = payload;
+
+    if (!sub || typeof sub !== "string") {
+      console.error("Missing authorization subject header in payload", payload);
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    if (!act || typeof act !== "string") {
+      console.error("Missing authorization account header in payload", payload);
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+  } catch (e) {
+    console.error("JWT verification failed", e);
+    return new NextResponse("Unauthorized", {
+      status: 401,
+    });
+  }
+
+  if (!signer || !act) {
     return new Response("Unauthorized", {
       status: 401,
     });
   }
 
   const body = await req.json();
-  console.log("POST /user : body", body);
+
   const accountAddress = body.account as `0x${string}`;
   if (!accountAddress) {
     return new Response("Invalid account", {
@@ -30,17 +78,15 @@ export async function POST(req: Request) {
     });
   }
 
+  if (accountAddress.toLowerCase() !== act.toLowerCase()) {
+    return new Response("Unauthorized", {
+      status: 401,
+    });
+  }
+
+  console.log("POST /user : ✓ JWT verified for ", accountAddress);
+
   try {
-    const JWKS = createRemoteJWKSet(new URL(jwksUri));
-    const { payload } = await jwtVerify(token, JWKS);
-    const { sub: signer, act } = payload;
-
-    if (act && typeof act === "string" && accountAddress.toLowerCase() !== act.toLowerCase()) {
-      throw new Error("JWT verification failed"); // returns 401 Unauthorized
-    }
-
-    console.log("POST /user : ✓ JWT verified");
-
     // check that the account has a score above the threshold
     const getAccountRes = await fetchAccount(lensClient, {
       address: accountAddress,
@@ -58,14 +104,7 @@ export async function POST(req: Request) {
       });
     }
 
-    console.log("POST /user : ✓ Score verified");
-
-    // const isSignerOwnerOrManager = await publicClient.readContract({
-    //   address: account as `0x${string}`,
-    //   abi: accountAbi,
-    //   functionName: "canExecuteTransactions",
-    //   args: [signer as `0x${string}`],
-    // });
+    console.log("POST /user : ✓ Score verified for", accountAddress);
 
     const canExecuteTransactions = await publicClient.multicall({
       contracts: [
@@ -86,17 +125,17 @@ export async function POST(req: Request) {
 
     // Check if the signer is the owner or the manager of the account
     if (canExecuteTransactions[0].error || !canExecuteTransactions[0].result) {
-      throw new Error("Signer is not a manager"); // returns 401 Unauthorized
+      console.error("POST /user : signer is not a manager for", accountAddress);
+      throw new Error("Signer is not a manager");
     }
 
     // Check if the Fameish Account Manager is a manager of the account
     if (canExecuteTransactions[1].error || !canExecuteTransactions[1].result) {
-      return new Response("Fameish is not a manager of the account", {
-        status: 401,
-      });
+      console.error("POST /user : Fameish is not a manager for", accountAddress);
+      throw new Error("Fameish is not a manager of the account");
     }
 
-    console.log("POST /user : ✓ Account managers verified");
+    console.log("POST /user : ✓ Account managers verified for", accountAddress);
 
     // Check if the user already exists
     const userQuery = supabase.from("user").select().ilike("account", accountAddress).single();
@@ -107,7 +146,7 @@ export async function POST(req: Request) {
       });
     }
 
-    console.log("POST /user : ✓ New user verified");
+    console.log("POST /user : ✓ New user verified for", accountAddress);
 
     const winnerAccount = await publicClient.readContract({
       address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
@@ -134,6 +173,7 @@ export async function POST(req: Request) {
     });
 
     if (isFollowing[0].error || (winnerExists && isFollowing[1].error)) {
+      console.error("POST /user : unable to get follow status for", accountAddress);
       return new Response("Unable to get follow status", {
         status: 500,
       });
@@ -141,6 +181,7 @@ export async function POST(req: Request) {
 
     // Ensure the account is following the Fameish account
     if (!isFollowing[0].result) {
+      console.error(`POST /user : ${accountAddress} not following Fameish account`);
       return new Response("Not following Fameish account", {
         status: 500,
       });
@@ -157,8 +198,8 @@ export async function POST(req: Request) {
         });
         await walletClient.writeContract(request);
       } catch (e) {
-        console.error(e);
-        return new Response("Failed to follow wining account", {
+        console.error(`POST /user : failed to follow winning account for ${accountAddress}`, e);
+        return new Response(`Failed to follow wining account for ${accountAddress}`, {
           status: 500,
         });
       }
@@ -174,7 +215,7 @@ export async function POST(req: Request) {
       .single();
 
     if (insertError) {
-      console.error("POST /user : insertError", insertError);
+      console.error(`POST /user : insertError for ${accountAddress}`, insertError);
       return new Response("Failed to create user", {
         status: 500,
       });
