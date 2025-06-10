@@ -29,8 +29,13 @@ import { track } from "@vercel/analytics";
 function ConnectWalletSection() {
   const { connectWallet } = useLensSession();
 
+  const handleLogin = () => {
+    track("Click", { name: "Log in", location: "Signup" });
+    connectWallet();
+  };
+
   return (
-    <Button size="xl" onClick={connectWallet}>
+    <Button size="xl" onClick={handleLogin}>
       <svg fill="none" viewBox="0 0 64 64" className="!w-6 !h-6">
         <path
           fillRule="evenodd"
@@ -87,7 +92,7 @@ function LensAccountChooserSection() {
     if (eligibleAccounts.length === 0) {
       track("Ineligible User", { walletAddress });
     }
-  }, [accountsAvailable]);
+  }, [accountsAvailable, walletAddress]);
 
   return (
     <ScrollArea className=" w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
