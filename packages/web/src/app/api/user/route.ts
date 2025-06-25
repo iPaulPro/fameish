@@ -10,6 +10,7 @@ import { walletClient } from "@/lib/viem/walletClient";
 import { ZeroAddress } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { lensReputationAbi } from "@/lib/abis/lensReputation";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 const JWKS = createRemoteJWKSet(new URL(jwksUri));
@@ -38,11 +39,13 @@ export async function POST(req: Request) {
 
   const token = req.headers.get("authorization")?.split(" ")[1];
   if (!token) {
+    console.error("POST /user : Missing authorization token");
     return new NextResponse("Unauthorized", {
       status: 401,
     });
   }
 
+  let accountFromJwt: string | null = null;
   try {
     const { payload } = await jwtVerify(token, JWKS);
     const { sub, act } = payload;
@@ -51,11 +54,8 @@ export async function POST(req: Request) {
       console.error("Missing authorization subject header in payload", payload);
       return new NextResponse("Forbidden", { status: 403 });
     }
-
-    if (!act || typeof act !== "string") {
-      console.error("Missing authorization account header in payload", payload);
-      return new NextResponse("Forbidden", { status: 403 });
-    }
+    signer = sub;
+    accountFromJwt = (act as { sub: string }).sub;
   } catch (e) {
     console.error("JWT verification failed", e);
     return new NextResponse("Unauthorized", {
@@ -63,7 +63,8 @@ export async function POST(req: Request) {
     });
   }
 
-  if (!signer || !act) {
+  if (!signer || !accountFromJwt) {
+    console.error("POST /user : Missing signer or accountFromJwt", { signer, accountFromJwt });
     return new Response("Unauthorized", {
       status: 401,
     });
@@ -78,7 +79,11 @@ export async function POST(req: Request) {
     });
   }
 
-  if (accountAddress.toLowerCase() !== act.toLowerCase()) {
+  if (accountAddress.toLowerCase() !== accountFromJwt.toLowerCase()) {
+    console.error("POST /user : JWT account does not match provided account", {
+      jwtAccount: accountFromJwt,
+      providedAccount: accountAddress,
+    });
     return new Response("Unauthorized", {
       status: 401,
     });
@@ -98,13 +103,37 @@ export async function POST(req: Request) {
       });
     }
     const account = getAccountRes.value;
-    if (!account || account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!)) {
-      return new Response("Account score is too low", {
+    if (!account) {
+      console.error("POST /user : account not found for", accountAddress);
+      return new Response("Account not found", {
         status: 401,
       });
     }
 
-    console.log("POST /user : ✓ Score verified for", accountAddress);
+    if (account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!)) {
+      console.log("POST /user : ✕ Account Score too low for", accountAddress, "checking Lens Reputation Score...");
+      let lensRepScore = 0n;
+      try {
+        const { score } = await publicClient.readContract({
+          address: process.env.NEXT_PUBLIC_LENS_REP_ADDRESS! as `0x${string}`,
+          abi: lensReputationAbi,
+          functionName: "getScoreByAddress",
+          args: [account.owner, account.address],
+        });
+        lensRepScore = score;
+      } catch (e) {
+        console.error("POST /user : Error getting Lens Reputation Score", e);
+      }
+
+      if (lensRepScore < BigInt(process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!)) {
+        return new Response("Scores are too low", {
+          status: 401,
+        });
+      }
+      console.log("POST /user : ✓ Lens Reputation Score verified for", accountAddress);
+    } else {
+      console.log("POST /user : ✓ Account Score verified for", accountAddress);
+    }
 
     const canExecuteTransactions = await publicClient.multicall({
       contracts: [
@@ -225,7 +254,7 @@ export async function POST(req: Request) {
 
     return Response.json({ success: true, user: insertData });
   } catch (e) {
-    console.error("POST /user error", e);
+    console.error("POST /user : error", e);
     return new Response("Unauthorized", {
       status: 401,
     });

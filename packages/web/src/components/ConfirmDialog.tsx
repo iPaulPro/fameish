@@ -78,4 +78,6 @@ const ConfirmDialog = forwardRef<ConfirmDialogRef, ConfirmDialogProps>(
   },
 );
 
+ConfirmDialog.displayName = "ConfirmDialog";
+
 export default ConfirmDialog;

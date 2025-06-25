@@ -11,14 +11,6 @@ export const config = {
 
 export async function middleware(req: NextRequest) {
   const { nextUrl, headers } = req;
-  console.log(
-    "middleware triggered for:",
-    nextUrl.pathname,
-    "headers:",
-    headers,
-    "secret:",
-    process.env.MIDDLEWARE_SECRET,
-  );
 
   if (process.env.VERCEL_ENV !== "production" || !nextUrl.pathname.startsWith("/api/user")) {
     return NextResponse.next();
@@ -45,14 +37,15 @@ export async function middleware(req: NextRequest) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    if (!act || typeof act !== "string") {
-      console.error("Missing authorization account header in payload", payload);
+    const account = (act as { sub: string }).sub;
+    if (!account) {
+      console.error("middleware: Missing authorization account header in payload", payload);
       return new NextResponse("Forbidden", { status: 403 });
     }
 
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set("x-user-sub", sub);
-    requestHeaders.set("x-user-act", act);
+    requestHeaders.set("x-user-act", account);
     requestHeaders.set("x-secret", process.env.MIDDLEWARE_SECRET!);
 
     return NextResponse.next({

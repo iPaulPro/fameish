@@ -3,7 +3,7 @@
 import { Button } from "@/src/components/ui/button";
 import { useLensSession } from "@/hooks/LensSessionProvider";
 import { Account, evmAddress, useAccount } from "@lens-protocol/react";
-import { useReadContract, useSwitchChain, useWalletClient } from "wagmi";
+import { useReadContract, useReadContracts, useSwitchChain, useWalletClient } from "wagmi";
 import { accountAbi } from "@/lib/abis/account";
 import { EvmAddress } from "@lens-protocol/client";
 import { addAccountManager, fetchMeDetails, follow } from "@lens-protocol/client/actions";
@@ -25,6 +25,8 @@ import { CiUser } from "react-icons/ci";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { track } from "@vercel/analytics";
+import { lensReputationAbi } from "@/lib/abis/lensReputation";
+import Image from "next/image";
 
 function ConnectWalletSection() {
   const { connectWallet } = useLensSession();
@@ -68,8 +70,22 @@ function ConnectWalletMessage() {
 function LensAccountChooserSection() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [lensRepScoreMap, setLensRepScoreMap] = useState<Record<string, bigint>>({});
 
   const { accountsAvailable, walletAddress, logIn, error } = useLensSession();
+
+  const lensReputationContract = {
+    address: process.env.NEXT_PUBLIC_LENS_REP_ADDRESS! as `0x${string}`,
+    abi: lensReputationAbi,
+  } as const;
+
+  const { data: lensReputationScores, isLoading: lensReputationScoresLoading } = useReadContracts({
+    contracts: accountsAvailable.map(aa => ({
+      ...lensReputationContract,
+      functionName: "getScoreByAddress",
+      args: [aa.account.owner, aa.account.address],
+    })),
+  });
 
   useEffect(() => {
     if (error) {
@@ -94,9 +110,33 @@ function LensAccountChooserSection() {
     }
   }, [accountsAvailable, walletAddress]);
 
+  useEffect(() => {
+    if (!lensReputationScores || lensReputationScoresLoading) return;
+    const scoresMap: Record<string, bigint> = {};
+    lensReputationScores.forEach((score, index) => {
+      const account = accountsAvailable[index]?.account;
+      if (account) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        scoresMap[account.address] = score ? (score.result as any).score : 0n;
+      }
+    });
+    console.log("Lens Reputation Scores:", scoresMap);
+    setLensRepScoreMap(scoresMap);
+  }, [lensReputationScores, lensReputationScoresLoading, accountsAvailable]);
+
+  const isAccountEligible = useCallback(
+    (account: Account) => {
+      return (
+        account.score >= Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!) ||
+        lensRepScoreMap[account.address] >= BigInt(process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!)
+      );
+    },
+    [lensRepScoreMap],
+  );
+
   return (
     <ScrollArea className=" w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
-      <div className="flex flex-col divide-y">
+      <div className="flex flex-col divide-y border-b">
         {accountsAvailable
           .map(aa => aa.account)
           .sort((a, b) => b.score - a.score)
@@ -104,7 +144,7 @@ function LensAccountChooserSection() {
             <button
               type="button"
               key={account.address}
-              disabled={account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!)}
+              disabled={!isAccountEligible(account) || isLoggingIn}
               onClick={() => handleAccountSelection(account)}
               className="w-full flex items-center text-start p-3 gap-2 enabled:cursor-pointer enabled:hover:bg-neutral-100
               disabled:opacity-45"
@@ -116,14 +156,26 @@ function LensAccountChooserSection() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-grow flex flex-col">
-                <span className="text-sm font-semibold">
-                  {account.metadata?.name ?? "@" + account.username?.localName}
-                </span>
+                <div className="flex gap-1 items-center">
+                  <span className="text-sm font-semibold">
+                    {account.metadata?.name ?? "@" + account.username?.localName}
+                  </span>
+                  {lensRepScoreMap[account.address] > 0n && (
+                    <Image
+                      src="/images/lens-reputation.png"
+                      alt="Lens Reputation"
+                      width={16}
+                      height={16}
+                      title={`Lens Reputation Score: ${lensRepScoreMap[account.address] || 0}`}
+                      className="w-4 h-4"
+                    />
+                  )}
+                </div>
                 <span className="text-xs opacity-65">Lens Score: {new Intl.NumberFormat().format(account.score)}</span>
               </div>
               {isLoggingIn && selectedAddress == account.address ? (
                 <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
-              ) : account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!) ? (
+              ) : !isAccountEligible(account) ? (
                 <LuShieldBan className="flex-none w-4 h-4" />
               ) : (
                 <LuArrowRight className="flex-none opacity-45 w-4 h-4" />
@@ -144,8 +196,18 @@ function LensAccountChooserMessage() {
       <span className="text-2xl font-medium text-center md:text-start">Choose your Lens account</span>
       <span className="text-base opacity-65 pr-6 text-center md:text-start">
         Accounts must have a Lens Score of{" "}
-        {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!))} or greater to be
-        eligible.
+        {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!))} or greater, or a{" "}
+        <a href="https://lensreputation.xyz/" target="_blank" className="inline-flex items-baseline">
+          <Image
+            src="/images/lens-reputation.png"
+            alt="Lens Reputation"
+            width={16}
+            height={16}
+            className="inline-block mr-1"
+          />
+          Lens Reputation
+        </a>{" "}
+        Score over {process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!} to be eligible.
       </span>
     </>
   );
