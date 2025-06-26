@@ -203,7 +203,7 @@ function LensAccountChooserMessage() {
       <span className="text-base opacity-65 pr-6 text-center md:text-start">
         Accounts must have a Lens Score of{" "}
         {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!))} or greater, or a{" "}
-        <a href="https://lensreputation.xyz/" target="_blank" className="inline-flex items-baseline">
+        <a href="https://lensreputation.xyz?referral=RYEBL1MG" target="_blank" className="inline-flex items-baseline">
           <Image
             src="/images/lens-reputation.png"
             alt="Lens Reputation"
