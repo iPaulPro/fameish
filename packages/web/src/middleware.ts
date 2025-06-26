@@ -16,11 +16,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const origin = headers.get("origin");
-  if (origin !== process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return new NextResponse("Forbidden", { status: 403 });
-  }
-
   const token = headers.get("authorization")?.split(" ")[1];
   if (!token) {
     return new NextResponse("Unauthorized", {
