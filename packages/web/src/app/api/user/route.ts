@@ -12,9 +12,15 @@ import { NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { lensReputationAbi } from "@/lib/abis/lensReputation";
 import { track } from "@vercel/analytics/server";
+import { TablesInsert } from "@/database.types";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 const JWKS = createRemoteJWKSet(new URL(jwksUri));
+
+enum VerificationSource {
+  ACCOUNT_SCORE,
+  LENS_REPUTATION,
+}
 
 export async function POST(req: Request) {
   let signer: string | null = null;
@@ -94,6 +100,7 @@ export async function POST(req: Request) {
 
   console.log("POST /user : ✓ JWT verified for ", accountAddress);
 
+  let verificationSource: VerificationSource | null = null;
   try {
     // check that the account has a score above the threshold
     const getAccountRes = await fetchAccount(lensClient, {
@@ -139,15 +146,18 @@ export async function POST(req: Request) {
           status: 401,
         });
       }
+
+      verificationSource = VerificationSource.LENS_REPUTATION;
       console.log("POST /user : ✓ Lens Reputation Score verified for", accountAddress);
-      track("User Verified", {
+      await track("User Verified", {
         method: "Lens Reputation",
         account: accountAddress,
         lensRepScore: lensRepScore.toString(),
       });
     } else {
+      verificationSource = VerificationSource.ACCOUNT_SCORE;
       console.log("POST /user : ✓ Account Score verified for", accountAddress);
-      track("User Verified", {
+      await track("User Verified", {
         method: "Account Score",
         account: accountAddress,
         accountScore: account.score,
@@ -258,7 +268,7 @@ export async function POST(req: Request) {
     // create a new user
     const { data: insertData, error: insertError } = await supabase
       .from("user")
-      .insert({ account: accountAddress })
+      .insert({ account: accountAddress, verification_source: verificationSource } satisfies TablesInsert<"user">)
       .select()
       .single();
 

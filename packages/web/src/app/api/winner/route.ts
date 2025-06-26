@@ -11,6 +11,7 @@ import { graphAbi } from "@/lib/abis/graph";
 import { getContract } from "@/lib/lens/contracts";
 import { encodeFunctionData } from "viem";
 import { accountAbi } from "@/lib/abis/account";
+import { TablesUpdate } from "@/database.types";
 
 const ZeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -156,7 +157,7 @@ export async function GET(request: Request) {
 
   const { error: updateError } = await supabase
     .from("user")
-    .update({ should_unfollow: true })
+    .update({ should_unfollow: true } satisfies TablesUpdate<"user">)
     .in("account", notFollowing);
 
   if (updateError) {

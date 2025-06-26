@@ -30,26 +30,26 @@ export type Database = {
           follows: number
           id: number
           unfollows: number
-          winnerId: number
+          winnerid: number
         }
         Insert: {
           created_at?: string
           follows: number
           id?: number
           unfollows: number
-          winnerId: number
+          winnerid: number
         }
         Update: {
           created_at?: string
           follows?: number
           id?: number
           unfollows?: number
-          winnerId?: number
+          winnerid?: number
         }
         Relationships: [
           {
-            foreignKeyName: "scores_winnerId_fkey"
-            columns: ["winnerId"]
+            foreignKeyName: "scores_winnerid_fkey"
+            columns: ["winnerid"]
             isOneToOne: false
             referencedRelation: "winner"
             referencedColumns: ["id"]
@@ -63,6 +63,7 @@ export type Database = {
           eligible: boolean
           id: number
           should_unfollow: boolean
+          verification_source: number
         }
         Insert: {
           account: string
@@ -70,6 +71,7 @@ export type Database = {
           eligible?: boolean
           id?: number
           should_unfollow?: boolean
+          verification_source?: number
         }
         Update: {
           account?: string
@@ -77,6 +79,7 @@ export type Database = {
           eligible?: boolean
           id?: number
           should_unfollow?: boolean
+          verification_source?: number
         }
         Relationships: []
       }
@@ -84,25 +87,25 @@ export type Database = {
         Row: {
           id: number
           tx: string
-          userId: number | null
-          winDate: string
+          userid: number | null
+          windate: string
         }
         Insert: {
           id?: number
           tx: string
-          userId?: number | null
-          winDate?: string
+          userid?: number | null
+          windate?: string
         }
         Update: {
           id?: number
           tx?: string
-          userId?: number | null
-          winDate?: string
+          userid?: number | null
+          windate?: string
         }
         Relationships: [
           {
-            foreignKeyName: "winner_userId_fkey"
-            columns: ["userId"]
+            foreignKeyName: "winner_userid_fkey"
+            columns: ["userid"]
             isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
