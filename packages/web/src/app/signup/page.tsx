@@ -71,6 +71,7 @@ function LensAccountChooserSection() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [lensRepScoreMap, setLensRepScoreMap] = useState<Record<string, bigint>>({});
+  const [ownedAccounts, setOwnedAccounts] = useState<Account[]>([]);
 
   const { accountsAvailable, walletAddress, logIn, error } = useLensSession();
 
@@ -80,10 +81,10 @@ function LensAccountChooserSection() {
   } as const;
 
   const { data: lensReputationScores, isLoading: lensReputationScoresLoading } = useReadContracts({
-    contracts: accountsAvailable.map(aa => ({
+    contracts: ownedAccounts.map(account => ({
       ...lensReputationContract,
       functionName: "getScoreByAddress",
-      args: [aa.account.owner, aa.account.address],
+      args: [account.owner, account.address],
     })),
   });
 
@@ -93,6 +94,11 @@ function LensAccountChooserSection() {
     }
   }, [error]);
 
+  useEffect(() => {
+    const owned = accountsAvailable.filter(aa => aa.__typename === "AccountOwned").map(aa => aa.account);
+    setOwnedAccounts(owned);
+  }, [accountsAvailable]);
+
   const handleAccountSelection = async (account: Account) => {
     setSelectedAddress(account.address);
     setIsLoggingIn(true);
@@ -101,20 +107,20 @@ function LensAccountChooserSection() {
   };
 
   useEffect(() => {
-    if (!accountsAvailable?.length || !walletAddress) return;
-    const eligibleAccounts = accountsAvailable.filter(
-      aa => aa.account.score >= Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!),
+    if (!ownedAccounts?.length || !walletAddress) return;
+    const eligibleAccounts = ownedAccounts.filter(
+      account => account.score >= Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!),
     );
     if (eligibleAccounts.length === 0) {
       track("Ineligible User", { walletAddress });
     }
-  }, [accountsAvailable, walletAddress]);
+  }, [ownedAccounts, walletAddress]);
 
   useEffect(() => {
     if (!lensReputationScores || lensReputationScoresLoading) return;
     const scoresMap: Record<string, bigint> = {};
     lensReputationScores.forEach((score, index) => {
-      const account = accountsAvailable[index]?.account;
+      const account = ownedAccounts[index];
       if (account) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scoresMap[account.address] = score ? (score.result as any).score : 0n;
@@ -122,7 +128,7 @@ function LensAccountChooserSection() {
     });
     console.log("Lens Reputation Scores:", scoresMap);
     setLensRepScoreMap(scoresMap);
-  }, [lensReputationScores, lensReputationScoresLoading, accountsAvailable]);
+  }, [lensReputationScores, lensReputationScoresLoading, ownedAccounts]);
 
   const isAccountEligible = useCallback(
     (account: Account) => {
@@ -137,8 +143,7 @@ function LensAccountChooserSection() {
   return (
     <ScrollArea className=" w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
       <div className="flex flex-col divide-y border-b">
-        {accountsAvailable
-          .map(aa => aa.account)
+        {ownedAccounts
           .sort((a, b) => b.score - a.score)
           .map((account: Account) => (
             <button
