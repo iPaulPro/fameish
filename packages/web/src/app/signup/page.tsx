@@ -27,6 +27,7 @@ import Header from "@/components/Header";
 import { track } from "@vercel/analytics";
 import { lensReputationAbi } from "@/lib/abis/lensReputation";
 import Image from "next/image";
+import { toast } from "sonner";
 
 function ConnectWalletSection() {
   const { connectWallet } = useLensSession();
@@ -328,7 +329,7 @@ function AddAccountManagerMessage() {
 }
 
 function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
-  const [, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFollowingFameish, setIsFollowingFameish] = useState(false);
 
@@ -408,6 +409,11 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (!error) return;
+    toast.error(error);
+  }, [error]);
 
   return (
     <div className="flex flex-col items-center gap-2 pt-8">

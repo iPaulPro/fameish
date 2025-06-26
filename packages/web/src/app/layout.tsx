@@ -4,6 +4,7 @@ import { Roboto, Geist_Mono, Martian_Mono, Inter_Tight } from "next/font/google"
 import "./globals.css";
 import Providers from "@/app/providers";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "@/components/ui/sonner";
 
 const robotoSans = Roboto({
   variable: "--font-roboto-sans",
@@ -66,6 +67,7 @@ export default function RootLayout({
             <Analytics />
           </Providers>
         </div>
+        <Toaster />
       </body>
     </html>
   );

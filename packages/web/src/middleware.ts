@@ -48,7 +48,8 @@ export async function middleware(req: NextRequest) {
         headers: requestHeaders,
       },
     });
-  } catch {
+  } catch (e) {
+    console.error("middleware: Uncaught error", e);
     return new NextResponse("Unauthorized", {
       status: 401,
     });
