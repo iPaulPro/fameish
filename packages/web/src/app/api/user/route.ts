@@ -11,7 +11,7 @@ import { ZeroAddress } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { lensReputationAbi } from "@/lib/abis/lensReputation";
-import { track } from "@vercel/analytics";
+import { track } from "@vercel/analytics/server";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 const JWKS = createRemoteJWKSet(new URL(jwksUri));
