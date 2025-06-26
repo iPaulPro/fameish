@@ -11,6 +11,7 @@ import { ZeroAddress } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { lensReputationAbi } from "@/lib/abis/lensReputation";
+import { track } from "@vercel/analytics";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 const JWKS = createRemoteJWKSet(new URL(jwksUri));
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
   // when running in production, we verify the JWT and extract the signer and act in middleware
   if (process.env.VERCEL_ENV === "production") {
     if (process.env.MIDDLEWARE_SECRET !== req.headers.get("x-secret")) {
+      console.error("POST /user : Invalid middleware secret");
       return new Response("Unauthorized", {
         status: 401,
       });
@@ -31,6 +33,7 @@ export async function POST(req: Request) {
     act = req.headers.get("x-user-act");
 
     if (!signer || !act) {
+      console.error("POST /user : Missing signer or act in headers", { signer, act });
       return new Response("Unauthorized", {
         status: 401,
       });
@@ -126,13 +129,29 @@ export async function POST(req: Request) {
       }
 
       if (lensRepScore < BigInt(process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!)) {
+        console.log(
+          "POST /user : ✕ Lens Reputation Score too low for",
+          accountAddress,
+          "score:",
+          lensRepScore.toString(),
+        );
         return new Response("Scores are too low", {
           status: 401,
         });
       }
       console.log("POST /user : ✓ Lens Reputation Score verified for", accountAddress);
+      track("User Verified", {
+        method: "Lens Reputation",
+        account: accountAddress,
+        lensRepScore: lensRepScore.toString(),
+      });
     } else {
       console.log("POST /user : ✓ Account Score verified for", accountAddress);
+      track("User Verified", {
+        method: "Account Score",
+        account: accountAddress,
+        accountScore: account.score,
+      });
     }
 
     const canExecuteTransactions = await publicClient.multicall({
