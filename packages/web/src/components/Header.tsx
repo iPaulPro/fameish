@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useLensSession } from "@/hooks/LensSessionProvider";
+import { useLensSession } from "@/hooks/useLensSession";
 import { useRouter } from "next/navigation";
 import AnimatedCountdownClock from "@/components/AnimatedCountdownClock";
 import { useReadContract } from "wagmi";

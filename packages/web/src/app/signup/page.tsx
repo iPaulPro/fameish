@@ -1,15 +1,13 @@
 "use client";
 
 import { Button } from "@/src/components/ui/button";
-import { useLensSession } from "@/hooks/LensSessionProvider";
+import { useLensSession } from "@/hooks/useLensSession";
 import { Account, evmAddress, useAccount } from "@lens-protocol/react";
 import { useReadContract, useReadContracts, useSwitchChain, useWalletClient } from "wagmi";
 import { accountAbi } from "@/lib/abis/account";
 import { EvmAddress } from "@lens-protocol/client";
 import { addAccountManager, fetchMeDetails, follow } from "@lens-protocol/client/actions";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
-import { User } from "@/lib/db/tables";
-import { createSupabaseClient } from "@/lib/supabase/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import Lottie from "lottie-react";
 import registerAnimation from "@/lib/anim/anim_register.json";
@@ -28,6 +26,8 @@ import { track } from "@vercel/analytics";
 import { lensReputationAbi } from "@/lib/abis/lensReputation";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useSupabase } from "@/hooks/useSupabase";
+import { fetchUserByAccountAddress } from "@/operations/user";
 
 function ConnectWalletSection() {
   const { connectWallet } = useLensSession();
@@ -142,52 +142,58 @@ function LensAccountChooserSection() {
   );
 
   return (
-    <ScrollArea className=" w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
+    <ScrollArea className="w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
       <div className="flex flex-col divide-y border-b">
-        {ownedAccounts
-          .sort((a, b) => b.score - a.score)
-          .map((account: Account) => (
-            <button
-              type="button"
-              key={account.address}
-              disabled={!isAccountEligible(account) || isLoggingIn}
-              onClick={() => handleAccountSelection(account)}
-              className="w-full flex items-center text-start p-3 gap-2 enabled:cursor-pointer enabled:hover:bg-neutral-100
+        {ownedAccounts.length ? (
+          ownedAccounts
+            .sort((a, b) => b.score - a.score)
+            .map((account: Account) => (
+              <button
+                type="button"
+                key={account.address}
+                disabled={!isAccountEligible(account) || isLoggingIn}
+                onClick={() => handleAccountSelection(account)}
+                className="w-full flex items-center text-start p-3 gap-2 enabled:cursor-pointer enabled:hover:bg-neutral-100
               disabled:opacity-45"
-            >
-              <Avatar className="flex-none w-10 h-10">
-                <AvatarImage src={account.metadata?.picture} alt="Account avatar" />
-                <AvatarFallback>
-                  <FaUserCircle className="w-10 h-10 opacity-45" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-grow flex flex-col">
-                <div className="flex gap-1 items-center">
-                  <span className="text-sm font-semibold">
-                    {account.metadata?.name ?? "@" + account.username?.localName}
+              >
+                <Avatar className="flex-none w-10 h-10">
+                  <AvatarImage src={account.metadata?.picture} alt="Account avatar" />
+                  <AvatarFallback>
+                    <FaUserCircle className="w-10 h-10 opacity-45" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-grow flex flex-col">
+                  <div className="flex gap-1 items-center">
+                    <span className="text-sm font-semibold">
+                      {account.metadata?.name ?? "@" + account.username?.localName}
+                    </span>
+                    {lensRepScoreMap[account.address] > 0n && (
+                      <Image
+                        src="/images/lens-reputation.png"
+                        alt="Lens Reputation"
+                        width={16}
+                        height={16}
+                        title={`Lens Reputation Score: ${lensRepScoreMap[account.address] || 0}`}
+                        className="w-4 h-4"
+                      />
+                    )}
+                  </div>
+                  <span className="text-xs opacity-65">
+                    Lens Score: {new Intl.NumberFormat().format(account.score)}
                   </span>
-                  {lensRepScoreMap[account.address] > 0n && (
-                    <Image
-                      src="/images/lens-reputation.png"
-                      alt="Lens Reputation"
-                      width={16}
-                      height={16}
-                      title={`Lens Reputation Score: ${lensRepScoreMap[account.address] || 0}`}
-                      className="w-4 h-4"
-                    />
-                  )}
                 </div>
-                <span className="text-xs opacity-65">Lens Score: {new Intl.NumberFormat().format(account.score)}</span>
-              </div>
-              {isLoggingIn && selectedAddress == account.address ? (
-                <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
-              ) : !isAccountEligible(account) ? (
-                <LuShieldBan className="flex-none w-4 h-4" />
-              ) : (
-                <LuArrowRight className="flex-none opacity-45 w-4 h-4" />
-              )}
-            </button>
-          ))}
+                {isLoggingIn && selectedAddress == account.address ? (
+                  <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
+                ) : !isAccountEligible(account) ? (
+                  <LuShieldBan className="flex-none w-4 h-4" />
+                ) : (
+                  <LuArrowRight className="flex-none opacity-45 w-4 h-4" />
+                )}
+              </button>
+            ))
+        ) : (
+          <div className="flex w-full h-72 items-center justify-center text-sm opacity-65">Unable to load accounts</div>
+        )}
       </div>
     </ScrollArea>
   );
@@ -259,6 +265,12 @@ function AddAccountManagerSection({
     switchChain({ chainId: config.lens.chain.id });
 
     console.log("handleAddAccountManager: lens client", client, "wallet client", walletClient);
+
+    if (!client.isSessionClient()) {
+      setError("Please log in again");
+      setIsSubmitting(false);
+      return;
+    }
 
     const res = await addAccountManager(client, {
       address: evmAddress(process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS!),
@@ -347,7 +359,7 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
   }, [fameishAccount]);
 
   const handleCreateUser = async () => {
-    if (!client) {
+    if (!client.isSessionClient()) {
       setError("Please log in again");
       return;
     }
@@ -454,67 +466,87 @@ function CreateUserMessage() {
 }
 
 export default function Signup() {
-  const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [canExecuteTransactions, setCanExecuteTransactions] = useState<boolean>(false);
 
-  const { walletAddress, lensUser } = useLensSession();
+  const { walletAddress, lensUser, isLoading: sessionLoading } = useLensSession();
+  const { client: supabase } = useSupabase();
 
   const router = useRouter();
 
-  const supabase = createSupabaseClient();
-
-  const getUser = useCallback(
-    async (accountAddress: EvmAddress) => {
-      const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
-      const { data } = await userQuery;
-      return data as User;
+  const updateUser = useCallback(
+    async (accountAddress: string) => {
+      setIsLoading(true);
+      const { data, error } = await fetchUserByAccountAddress(supabase, accountAddress);
+      if (error) {
+        setError("Unable to get user details");
+        setIsLoading(false);
+        return;
+      }
+      if (data) {
+        router.push("/account");
+      } else {
+        setIsLoading(false);
+      }
     },
     [supabase],
   );
 
   useEffect(() => {
-    if (!lensUser) return;
-    getUser(lensUser.address).then(setUser);
-  }, [lensUser, getUser]);
+    console.log("lensUser", lensUser);
+    if (!lensUser) {
+      setIsLoading(sessionLoading);
+      return;
+    }
+    updateUser(lensUser.address);
+  }, [lensUser, updateUser, sessionLoading]);
 
   useEffect(() => {
-    if (user) {
-      router.push("/account");
-    }
-  }, [user, router]);
+    if (!error) return;
+    toast.error(error);
+  }, [error]);
 
   return (
     <div className="w-full flex-grow flex flex-col">
       <Header />
       <div className="flex-grow w-full h-full flex justify-center items-center -mt-10">
-        <div className="bg-background rounded-2xl shadow-xl w-full max-w-4xl grid md:grid-cols-12 items-center overflow-hidden">
-          <div className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-6 from-neutral-50 bg-gradient-to-l order-2 md:order-1 rounded-l-xl border-t md:border-r border-neutral-100">
-            {canExecuteTransactions && lensUser ? (
-              <CreateUserSection accountAddress={lensUser.address} />
-            ) : lensUser ? (
-              <AddAccountManagerSection
-                accountAddress={lensUser.address}
-                setCanExecuteTransactions={setCanExecuteTransactions}
-              />
-            ) : walletAddress ? (
-              <LensAccountChooserSection />
-            ) : (
-              <ConnectWalletSection />
-            )}
-          </div>
-          <div className="md:min-h-96 md:col-span-7 p-6 md:p-12 order-1 md:order-2">
-            <div className="flex flex-col justify-center gap-2">
-              {canExecuteTransactions ? (
-                <CreateUserMessage />
-              ) : lensUser?.address ? (
-                <AddAccountManagerMessage />
-              ) : walletAddress ? (
-                <LensAccountChooserMessage />
-              ) : (
-                <ConnectWalletMessage />
-              )}
+        <div className="bg-background rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
+          {isLoading ? (
+            <div className="min-h-96 w-full flex items-center justify-center">
+              <LuLoader className="animate-spin flex-none opacity-45 w-6 h-6" />
             </div>
-          </div>
+          ) : (
+            <div className="grid md:grid-cols-12 items-center ">
+              <div className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-6 from-neutral-50 bg-gradient-to-l order-2 md:order-1 rounded-l-xl border-t md:border-r border-neutral-100">
+                {canExecuteTransactions && lensUser ? (
+                  <CreateUserSection accountAddress={lensUser.address} />
+                ) : lensUser ? (
+                  <AddAccountManagerSection
+                    accountAddress={lensUser.address}
+                    setCanExecuteTransactions={setCanExecuteTransactions}
+                  />
+                ) : walletAddress ? (
+                  <LensAccountChooserSection />
+                ) : (
+                  <ConnectWalletSection />
+                )}
+              </div>
+              <div className="md:min-h-96 md:col-span-7 p-6 md:p-12 order-1 md:order-2">
+                <div className="flex flex-col justify-center gap-2">
+                  {canExecuteTransactions ? (
+                    <CreateUserMessage />
+                  ) : lensUser?.address ? (
+                    <AddAccountManagerMessage />
+                  ) : walletAddress ? (
+                    <LensAccountChooserMessage />
+                  ) : (
+                    <ConnectWalletMessage />
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

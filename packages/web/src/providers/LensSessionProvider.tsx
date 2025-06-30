@@ -16,7 +16,7 @@ import {
 import { fetchAccount, fetchAccountsAvailable } from "@lens-protocol/client/actions";
 import config from "@/src/config";
 
-interface LensSessionContextType {
+export interface LensSessionContextType {
   /**
    * The connected wallet address
    */
@@ -40,7 +40,7 @@ interface LensSessionContextType {
   /**
    * The Lens session client
    */
-  client: SessionClient | null | undefined;
+  client: SessionClient | PublicClient;
 
   /**
    * Whether the session is loading
@@ -79,7 +79,7 @@ interface LensSessionContextType {
   refresh: () => Promise<void>;
 }
 
-const LensSessionContext = createContext<LensSessionContextType | undefined>(undefined);
+export const LensSessionContext = createContext<LensSessionContextType | undefined>(undefined);
 
 interface LensSessionProviderProps {
   children: ReactNode;
@@ -289,7 +289,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
           lensUser,
           account,
           accountsAvailable,
-          client: sessionClient,
+          client: sessionClient ?? lensClient,
           isLoading,
           error,
           connectWallet,
@@ -305,12 +305,4 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   );
 };
 
-const useLensSession = (): LensSessionContextType => {
-  const context = useContext(LensSessionContext);
-  if (!context) {
-    throw new Error("useLens must be used within a LensSessionProvider");
-  }
-  return context;
-};
-
-export { LensSessionProvider, useLensSession };
+export { LensSessionProvider };

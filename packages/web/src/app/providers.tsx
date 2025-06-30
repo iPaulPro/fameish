@@ -7,7 +7,8 @@ import { WagmiProvider } from "wagmi";
 import { config as wagmiConfig } from "@/lib/wagmi/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider } from "connectkit";
-import { LensSessionProvider } from "@/hooks/LensSessionProvider";
+import { LensSessionProvider } from "@/src/providers/LensSessionProvider";
+import { SupabaseProvider } from "@/src/providers/SupabaseProvider";
 
 const queryClient = new QueryClient();
 
@@ -17,7 +18,9 @@ export default function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider>
           <LensProvider client={lensClient}>
-            <LensSessionProvider>{children}</LensSessionProvider>
+            <LensSessionProvider>
+              <SupabaseProvider>{children}</SupabaseProvider>
+            </LensSessionProvider>
           </LensProvider>
         </ConnectKitProvider>
       </QueryClientProvider>

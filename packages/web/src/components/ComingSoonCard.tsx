@@ -1,15 +1,16 @@
-import { createSupabaseClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
 import SemiCircleProgressBar from "@/components/SemiCircleProgressBar";
 import { Button } from "@/components/ui/button";
 import CountUp from "@/components/CountUp";
 import { track } from "@vercel/analytics";
+import { useSupabase } from "@/hooks/useSupabase";
+import { getUserCount } from "@/operations/recordCount";
 
 export default function ComingSoonCard() {
   const minUserCount = Number(process.env.NEXT_PUBLIC_LENS_USER_COUNT_MIN!);
   const [userCount, setUserCount] = useState<number>(0);
 
-  const supabase = createSupabaseClient();
+  const { client: supabase } = useSupabase();
 
   const handleRecordUpdated = (payload: { new: { count: number } }) => {
     console.log("Record updated:", payload);
@@ -34,13 +35,11 @@ export default function ComingSoonCard() {
   }, [supabase]);
 
   const updateUserCount = useCallback(async () => {
-    const { data, error } = await supabase.from("record_count").select().eq("table_name", "user").limit(1).single();
-    if (error) {
-      console.error("Error fetching user count:", error);
-      return;
-    }
-    if (data) {
-      setUserCount(data.count);
+    try {
+      const count = await getUserCount(supabase);
+      setUserCount(count);
+    } catch (e) {
+      console.error("Error fetching user count:", e);
     }
   }, [supabase]);
 

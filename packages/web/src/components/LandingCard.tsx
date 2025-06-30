@@ -8,9 +8,10 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchAccount } from "@lens-protocol/client/actions";
 import { lensClient } from "@/lib/lens/client";
 import { Account } from "@lens-protocol/react";
-import { createSupabaseClient } from "@/lib/supabase/client";
 import { LuLoader } from "react-icons/lu";
 import { ZeroAddress } from "@/lib/utils";
+import { useSupabase } from "@/hooks/useSupabase";
+import { getUserCount } from "@/operations/recordCount";
 
 type LandingCardProps = {
   winnerAddress: string;
@@ -32,7 +33,7 @@ export default function LandingCard({ winnerAddress }: LandingCardProps) {
     functionName: "followerCount",
   });
 
-  const supabase = createSupabaseClient();
+  const { client: supabase } = useSupabase();
 
   useEffect(() => {
     if (!winnerAddress) return;
@@ -50,13 +51,11 @@ export default function LandingCard({ winnerAddress }: LandingCardProps) {
   }, [winnerAddress]);
 
   const updateUserCount = useCallback(async () => {
-    const { data, error } = await supabase.from("record_count").select().eq("table_name", "user").limit(1).single();
-    if (error) {
-      console.error("Error fetching user count:", error);
-      return;
-    }
-    if (data) {
-      setUserCount(data.count);
+    try {
+      const count = await getUserCount(supabase);
+      setUserCount(count);
+    } catch (e) {
+      console.error("Error fetching user count:", e);
     }
   }, [supabase]);
 

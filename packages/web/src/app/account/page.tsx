@@ -1,37 +1,47 @@
 "use client";
 
 import Header from "@/components/Header";
-import { createSupabaseClient } from "@/lib/supabase/client";
-import { EvmAddress } from "@lens-protocol/client";
-import { User } from "@/lib/db/tables";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FaCheckCircle, FaUserCircle } from "react-icons/fa";
-import { evmAddress } from "@lens-protocol/react";
-import { useCallback, useEffect } from "react";
-import { useLensSession } from "@/hooks/LensSessionProvider";
+import { useCallback, useEffect, useState } from "react";
+import { useLensSession } from "@/hooks/useLensSession";
 import { truncateAddress } from "@/lib/utils";
 import { Separator } from "@/src/components/ui/separator";
 import Link from "next/link";
 import { LuLoader } from "react-icons/lu";
+import { useSupabase } from "@/hooks/useSupabase";
+import { fetchUserByAccountAddress } from "@/operations/user";
+import { User } from "@/lib/supabase/tables";
+import { toast } from "sonner";
 
 export default function Account() {
-  const supabase = createSupabaseClient();
+  const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
+  const { client: supabase } = useSupabase();
   const { account } = useLensSession();
 
-  const getUser = useCallback(
-    async (accountAddress: EvmAddress) => {
-      const userQuery = supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
-      const { data } = await userQuery;
-      return data as User;
+  const updateUser = useCallback(
+    async (accountAddress: string) => {
+      const { data, error } = await fetchUserByAccountAddress(supabase, accountAddress);
+      if (error) {
+        setError("Unable to get user details");
+        return;
+      }
+      setUser(data);
     },
     [supabase],
   );
 
   useEffect(() => {
     if (!account) return;
-    getUser(evmAddress(account.address));
-  }, [account, getUser]);
+    updateUser(account.address);
+  }, [account, updateUser]);
+
+  useEffect(() => {
+    if (!error) return;
+    toast.error(error);
+  }, [error]);
 
   return (
     <div className="w-full flex-grow flex flex-col">
@@ -66,11 +76,19 @@ export default function Account() {
               <div className="text-sm opacity-65">Manage your account settings and preferences.</div>
             </div>
             <Separator />
-            {account ? (
-              <div className="flex-grow flex flex-wrap gap-2 items-center py-8">
-                <FaCheckCircle className="w-8 h-8 text-emerald-400" />
-                <span className="text-base md:text-lg font-semibold">You are eligible to win the next drawing!</span>
-              </div>
+            {user ? (
+              user.eligible ? (
+                <div className="flex-grow flex flex-wrap gap-2 items-center py-8">
+                  <FaCheckCircle className="w-8 h-8 text-emerald-400" />
+                  <span className="text-base md:text-lg font-semibold">You are eligible to win the next drawing!</span>
+                </div>
+              ) : (
+                <div className="flex-grow flex flex-wrap gap-2 items-center py-8">
+                  <span className="text-base md:text-lg font-semibold">
+                    You are not eligible to win the next drawing.
+                  </span>
+                </div>
+              )
             ) : (
               <div className="flex flex-grow items-center justify-center">
                 <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
