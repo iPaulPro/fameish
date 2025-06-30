@@ -490,7 +490,7 @@ export default function Signup() {
         setIsLoading(false);
       }
     },
-    [supabase],
+    [supabase, router],
   );
 
   useEffect(() => {

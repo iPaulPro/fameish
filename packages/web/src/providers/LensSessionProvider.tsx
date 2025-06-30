@@ -1,4 +1,4 @@
-import { createContext, FC, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, FC, ReactNode, useCallback, useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { useModal } from "connectkit";
 import {
