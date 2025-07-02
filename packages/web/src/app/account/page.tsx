@@ -13,30 +13,37 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { fetchUserByAccountAddress } from "@/operations/user";
 import { User } from "@/lib/supabase/tables";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function Account() {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { client: supabase } = useSupabase();
-  const { account } = useLensSession();
+  const { account, isLoading: sessionLoading } = useLensSession();
+  const router = useRouter();
 
   const updateUser = useCallback(
     async (accountAddress: string) => {
       const { data, error } = await fetchUserByAccountAddress(supabase, accountAddress);
       if (error) {
         setError("Unable to get user details");
+        router.replace("/");
         return;
       }
       setUser(data);
     },
-    [supabase],
+    [supabase, router],
   );
 
   useEffect(() => {
-    if (!account) return;
+    if (sessionLoading) return;
+    if (!account) {
+      router.replace("/");
+      return;
+    }
     updateUser(account.address);
-  }, [account, updateUser]);
+  }, [account, updateUser, sessionLoading]);
 
   useEffect(() => {
     if (!error) return;
