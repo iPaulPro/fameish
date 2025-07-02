@@ -12,22 +12,19 @@ import { LuLoader } from "react-icons/lu";
 import { useSupabase } from "@/hooks/useSupabase";
 import { fetchUserByAccountAddress } from "@/operations/user";
 import { User } from "@/lib/supabase/tables";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function Account() {
   const [user, setUser] = useState<User | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const { client: supabase } = useSupabase();
-  const { account, isLoading: sessionLoading } = useLensSession();
+  const { account, isLoading } = useLensSession();
   const router = useRouter();
 
   const updateUser = useCallback(
     async (accountAddress: string) => {
       const { data, error } = await fetchUserByAccountAddress(supabase, accountAddress);
-      if (error) {
-        setError("Unable to get user details");
+      if (!data || error) {
         router.replace("/");
         return;
       }
@@ -37,18 +34,21 @@ export default function Account() {
   );
 
   useEffect(() => {
-    if (sessionLoading) return;
+    if (isLoading) return;
     if (!account) {
       router.replace("/");
       return;
     }
     updateUser(account.address);
-  }, [account, updateUser, sessionLoading]);
+  }, [account, updateUser, router, isLoading]);
 
-  useEffect(() => {
-    if (!error) return;
-    toast.error(error);
-  }, [error]);
+  if (!user) {
+    return (
+      <div className="w-full flex-grow flex flex-col flex justify-center items-center">
+        <LuLoader className="animate-spin flex-none opacity-45 w-4 h-4" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex-grow flex flex-col">

@@ -456,7 +456,7 @@ function CreateUserMessage() {
       <div className="flex justify-center pb-2">
         <Lottie animationData={moonwalkAnimation} className="w-24 h-24" />
       </div>
-      <span className="text-2xl font-medium text-center md:text-start">All set!</span>
+      <span className="text-2xl font-medium text-center md:text-start">Last step!</span>
       <span className="text-base opacity-65 pr-6 text-center md:text-start">
         Creating your account will trigger a follow of today&apos;s winner and the{" "}
         <span className="font-semibold">@fameish</span> accounts, and make you eligible to win!
@@ -494,7 +494,6 @@ export default function Signup() {
   );
 
   useEffect(() => {
-    console.log("lensUser", lensUser);
     if (!lensUser) {
       setIsLoading(sessionLoading);
       return;

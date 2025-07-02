@@ -8,7 +8,10 @@ import { fameishAbi } from "@/lib/abis/fameish";
 import Image from "next/image";
 import { track } from "@vercel/analytics";
 import ConfirmDialog, { ConfirmDialogRef } from "@/components/ConfirmDialog";
-import { useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { User } from "@/lib/supabase/tables";
+import { useSupabase } from "@/hooks/useSupabase";
+import { fetchUserByAccountAddress } from "@/operations/user";
 
 type HeaderProps = {
   showLinks?: boolean;
@@ -16,7 +19,10 @@ type HeaderProps = {
 };
 
 export default function Header({ showLinks, showAccount = true }: HeaderProps) {
-  const { walletAddress, lensUser, logOut } = useLensSession();
+  const [user, setUser] = useState<User | null>(null);
+
+  const { client: supabase } = useSupabase();
+  const { account, walletAddress, logOut } = useLensSession();
 
   const router = useRouter();
 
@@ -28,10 +34,23 @@ export default function Header({ showLinks, showAccount = true }: HeaderProps) {
 
   const confirmLogoutDialog = useRef<ConfirmDialogRef>(null);
 
+  const updateUser = useCallback(
+    async (accountAddress: string) => {
+      const { data } = await fetchUserByAccountAddress(supabase, accountAddress);
+      setUser(data);
+    },
+    [supabase, router],
+  );
+
   const handleLogout = async () => {
     await logOut();
     router.push("/");
   };
+
+  useEffect(() => {
+    if (!account) return;
+    updateUser(account.address);
+  }, [account, updateUser]);
 
   return (
     <>
@@ -78,7 +97,7 @@ export default function Header({ showLinks, showAccount = true }: HeaderProps) {
 
         {showAccount && (
           <div className="flex items-center justify-end gap-x-6">
-            {lensUser ? (
+            {user ? (
               showLinks ? (
                 <Link href="/account" className="font-medium">
                   Account
