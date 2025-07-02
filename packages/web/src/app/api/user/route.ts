@@ -181,8 +181,8 @@ export async function POST(req: Request) {
     console.log("POST /user : ✓ Account managers verified for", accountAddress);
 
     // Check if the user already exists
-    const userData = await fetchUserByAccountAddress(supabase, accountAddress);
-    if (userData) {
+    const { data: user } = await fetchUserByAccountAddress(supabase, accountAddress);
+    if (user) {
       return Response.json({ success: false, message: "Account already exists" }, { status: 409 });
     }
 
