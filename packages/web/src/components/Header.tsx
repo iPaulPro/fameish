@@ -39,7 +39,7 @@ export default function Header({ showLinks, showAccount = true }: HeaderProps) {
       const { data } = await fetchUserByAccountAddress(supabase, accountAddress);
       setUser(data);
     },
-    [supabase, router],
+    [supabase],
   );
 
   const handleLogout = async () => {

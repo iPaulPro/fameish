@@ -17,7 +17,7 @@ const fetchUserByAccountAddress = async (
   supabase: SupabaseClient<Database>,
   accountAddress: string,
 ): Promise<RecordResponse<User | null>> =>
-  supabase.from("user").select().ilike("account", accountAddress).maybeSingle();
+  supabase.from("user").select().ilike("account", accountAddress.toLowerCase()).maybeSingle();
 
 const createUser = async (
   supabase: SupabaseClient<Database>,
@@ -26,7 +26,10 @@ const createUser = async (
 ): Promise<RecordResponse<User>> =>
   supabase
     .from("user")
-    .insert({ account: accountAddress, verification_source: verificationSource } satisfies TablesInsert<"user">)
+    .insert({
+      account: accountAddress.toLowerCase(),
+      verification_source: verificationSource,
+    } satisfies TablesInsert<"user">)
     .select()
     .single();
 
