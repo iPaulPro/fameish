@@ -114,7 +114,12 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   });
 
   const updateAccount = useCallback(async () => {
-    if (!lensUser) return;
+    if (lensUser === undefined) return;
+    if (lensUser === null) {
+      setAccount(null);
+      setAccountLoading(false);
+      return;
+    }
     setAccountLoading(true);
     const accountResult = await fetchAccount(lensClient, {
       address: lensUser.address,
@@ -161,7 +166,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   );
 
   useEffect(() => {
-    if (accountLoading || account || !lensUser) return;
+    if (accountLoading || account || lensUser === undefined) return;
     updateAccount();
   }, [accountLoading, lensUser, account, updateAccount]);
 

@@ -34,8 +34,7 @@ export default function Account() {
   );
 
   useEffect(() => {
-    console.log("accountLoading", accountLoading, "lensUserLoading", lensUserLoading, "account", account);
-    if (accountLoading || lensUserLoading || account == undefined) return;
+    if (accountLoading || lensUserLoading || account === undefined) return;
     if (account == null) {
       router.replace("/");
       return;
