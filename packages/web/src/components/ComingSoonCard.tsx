@@ -13,7 +13,6 @@ export default function ComingSoonCard() {
   const { client: supabase } = useSupabase();
 
   const handleRecordUpdated = (payload: { new: { count: number } }) => {
-    console.log("Record updated:", payload);
     if (payload.new.count) {
       setUserCount(payload.new.count);
     }

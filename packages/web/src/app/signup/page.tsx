@@ -127,7 +127,6 @@ function LensAccountChooserSection() {
         scoresMap[account.address] = score ? (score.result as any).score : 0n;
       }
     });
-    console.log("Lens Reputation Scores:", scoresMap);
     setLensRepScoreMap(scoresMap);
   }, [lensReputationScores, lensReputationScoresLoading, ownedAccounts]);
 
@@ -264,8 +263,6 @@ function AddAccountManagerSection({
 
     switchChain({ chainId: config.lens.chain.id });
 
-    console.log("handleAddAccountManager: lens client", client, "wallet client", walletClient);
-
     if (!client.isSessionClient()) {
       setError("Please log in again");
       setIsSubmitting(false);
@@ -293,7 +290,6 @@ function AddAccountManagerSection({
 
     refetch();
 
-    console.log("Account manager added:", res.value);
     setIsSubmitting(false);
   };
 
@@ -410,7 +406,6 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
         }),
       });
       const data = await res.json();
-      console.log("handleCreateUser: POST /api/user : res=", data);
       if (data.success) {
         router.push("/account");
       }
