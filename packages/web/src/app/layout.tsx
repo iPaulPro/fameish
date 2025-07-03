@@ -67,7 +67,8 @@ export default function RootLayout({
             <Analytics />
           </Providers>
         </div>
-        <Toaster richColors />
+        <Toaster richColors position="top-center" theme="light" className="hidden sm:block shadow-2xl" offset={64} />
+        <Toaster richColors position="bottom-center" theme="light" className="sm:hidden shadow-2xl" />
       </body>
     </html>
   );

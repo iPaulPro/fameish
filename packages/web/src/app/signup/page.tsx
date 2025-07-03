@@ -58,10 +58,10 @@ function ConnectWalletMessage() {
       <div className="flex justify-center pb-2">
         <Lottie animationData={usersAnimation} className="w-24 h-24" />
       </div>
-      <span className="text-2xl font-medium pb-2 text-center md:text-start">
+      <span className="text-xl md:text-2xl font-medium pb-2 text-center md:text-start">
         Every day, one user is chosen to be followed by all other users
       </span>
-      <span className="text-base opacity-65 pr-6 text-center md:text-start">
+      <span className="text-sm md:text-base opacity-65 pr-6 text-center md:text-start">
         The winner is automatically followed and unfollowed for you.
       </span>
     </div>
@@ -141,7 +141,7 @@ function LensAccountChooserSection() {
   );
 
   return (
-    <ScrollArea className="w-11/12 md:w-3/4 h-72 rounded-xl border bg-background">
+    <ScrollArea className="w-11/12 md:w-3/4 h-72 rounded-xl border bg-[#FFFFFFCC]">
       <div className="flex flex-col divide-y border-b">
         {ownedAccounts.length ? (
           ownedAccounts
@@ -205,9 +205,9 @@ function LensAccountChooserMessage() {
         <Lottie animationData={registerAnimation} className="w-24 h-24" />
       </div>
       <span className="text-2xl font-medium text-center md:text-start">Choose your Lens account</span>
-      <span className="text-base opacity-65 pr-6 text-center md:text-start">
-        Accounts must have a Lens Score of{" "}
-        {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!))} or greater, or a{" "}
+      <span className="text-sm md:text-base opacity-65 pr-6 text-center md:text-start">
+        Accounts must have a Lens Score over{" "}
+        {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!))}, or a{" "}
         <a href="https://lensreputation.xyz?referral=RYEBL1MG" target="_blank" className="inline-flex items-baseline">
           <Image
             src="/images/lens-reputation.png"
@@ -220,7 +220,7 @@ function LensAccountChooserMessage() {
         </a>{" "}
         Score over {process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!} to be eligible.
       </span>
-      <span className="text-xs opacity-50 pt-4 text-center">
+      <span className="hidden md:block text-xs opacity-50 pt-4 text-center md:text-start">
         Note: A Lens Score over{" "}
         {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_SECONDARY_ACCOUNT_SCORE!))} is required
         when using Lens Reputation for verification.
@@ -330,7 +330,7 @@ function AddAccountManagerMessage() {
         <Lottie animationData={linkAnimation} className="w-24 h-24" />
       </div>
       <span className="text-2xl font-medium text-center md:text-start">Grant permissions for Fameish</span>
-      <span className="text-base opacity-65 pr-6 text-center md:text-start">
+      <span className="text-sm md:text-base opacity-65 pr-6 text-center md:text-start">
         This allows us to follow and unfollow on your behalf. The Fameish Manager is{" "}
         <a href="https://github.com/iPaulPro/fameish" target="_blank">
           open source <FaExternalLinkAlt className="inline w-2 h-2" />
@@ -460,7 +460,7 @@ function CreateUserMessage() {
         <Lottie animationData={moonwalkAnimation} className="w-24 h-24" />
       </div>
       <span className="text-2xl font-medium text-center md:text-start">Last step!</span>
-      <span className="text-base opacity-65 pr-6 text-center md:text-start">
+      <span className="text-sm md:text-base opacity-65 pr-6 text-center md:text-start">
         Creating your account will trigger a follow of today&apos;s winner and the{" "}
         <span className="font-semibold">@fameish</span> accounts, and make you eligible to win!
       </span>
@@ -473,7 +473,7 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [canExecuteTransactions, setCanExecuteTransactions] = useState<boolean>(false);
 
-  const { walletAddress, lensUser, isLoading: sessionLoading } = useLensSession();
+  const { walletAddress, lensUser, sessionLoading, lensUserLoading, isConnecting } = useLensSession();
   const { client: supabase } = useSupabase();
 
   const router = useRouter();
@@ -498,11 +498,11 @@ export default function Signup() {
 
   useEffect(() => {
     if (!lensUser) {
-      setIsLoading(sessionLoading);
+      setIsLoading(sessionLoading || lensUserLoading || isConnecting);
       return;
     }
     updateUser(lensUser.address);
-  }, [lensUser, updateUser, sessionLoading]);
+  }, [lensUser, updateUser, sessionLoading, lensUserLoading, isConnecting]);
 
   useEffect(() => {
     if (!error) return;
@@ -512,15 +512,15 @@ export default function Signup() {
   return (
     <div className="w-full flex-grow flex flex-col">
       <Header />
-      <div className="flex-grow w-full h-full flex justify-center items-center -mt-10">
-        <div className="bg-background rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
+      <div className="flex-grow w-full h-full flex justify-center items-center md:-mt-10">
+        <div className="rounded-2xl md:shadow-xl w-full max-w-4xl overflow-hidden md:border-t md:border-t-neutral-100">
           {isLoading ? (
-            <div className="min-h-96 w-full flex items-center justify-center">
+            <div className="from-background bg-gradient-to-b md:bg-gradient-to-l min-h-96 w-full flex items-center justify-center">
               <LuLoader className="animate-spin flex-none opacity-45 w-6 h-6" />
             </div>
           ) : (
             <div className="grid md:grid-cols-12 items-center ">
-              <div className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-6 from-neutral-50 bg-gradient-to-l order-2 md:order-1 rounded-l-xl border-t md:border-r border-neutral-100">
+              <div className="w-full h-full p-6 md:col-span-5 flex items-center justify-center px-2 from-background bg-gradient-to-b md:bg-gradient-to-l order-2 md:order-1 md:border-r border-neutral-100">
                 {canExecuteTransactions && lensUser ? (
                   <CreateUserSection accountAddress={lensUser.address} />
                 ) : lensUser ? (
@@ -534,7 +534,7 @@ export default function Signup() {
                   <ConnectWalletSection />
                 )}
               </div>
-              <div className="md:min-h-96 md:col-span-7 p-6 md:p-12 order-1 md:order-2">
+              <div className="bg-background md:min-h-96 md:col-span-7 p-6 md:p-12 order-1 md:order-2">
                 <div className="flex flex-col justify-center gap-2">
                   {canExecuteTransactions ? (
                     <CreateUserMessage />

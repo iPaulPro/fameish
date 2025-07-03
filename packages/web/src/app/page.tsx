@@ -44,7 +44,7 @@ export default function Home() {
         <div className="flex flex-col flex-grow items-center justify-center text-center max-w-4xl mx-auto pb-8 md:pb-12">
           <h1
             className="text-3xl md:text-[4rem] lg:text-[4.5rem] xl:text-[5rem] font-medium font-hero
-           leading-10 md:leading-20 tracking-tighter mb-8 text-balance"
+            leading-10 md:leading-20 tracking-tighter mb-8 text-balance"
           >
             Become the most-followed person on Lens, for a day
           </h1>

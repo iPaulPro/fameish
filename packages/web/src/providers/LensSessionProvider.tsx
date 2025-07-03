@@ -30,7 +30,7 @@ export interface LensSessionContextType {
   /**
    * The Lens account for the authenticated user
    */
-  account: Account | null;
+  account: Account | undefined | null;
 
   /**
    * A list of Lens accounts owned or managed by the authenticated user
@@ -42,10 +42,17 @@ export interface LensSessionContextType {
    */
   client: SessionClient | PublicClient;
 
-  /**
-   * Whether the session is loading
-   */
-  isLoading: boolean;
+  isConnecting: boolean;
+
+  loginLoading: boolean;
+
+  logoutLoading: boolean;
+
+  sessionLoading: boolean;
+
+  lensUserLoading: boolean;
+
+  accountLoading: boolean;
 
   /**
    * An error that occurred during the session lifecycle
@@ -86,9 +93,9 @@ interface LensSessionProviderProps {
 }
 
 const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
-  const [account, setAccount] = useState<Account | null>(null);
+  const [account, setAccount] = useState<Account | undefined | null>(undefined);
   const [accountsAvailable, setAccountsAvailable] = useState<AccountAvailable[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [accountLoading, setAccountLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   const { data: walletClient } = useWalletClient({
@@ -100,7 +107,7 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   const { execute: executeLogin, loading: loginLoading, error: loginError } = useLogin();
   const { execute: executeLogout, loading: logoutLoading, error: logoutError } = useLogout();
   const { data: sessionClient, loading: sessionLoading, error: sessionError } = useSessionClient();
-  const { data: lensUser, loading: userLoading } = useAuthenticatedUser();
+  const { data: lensUser, loading: lensUserLoading } = useAuthenticatedUser();
 
   const lensClient = PublicClient.create({
     environment: config.lens.environment,
@@ -108,15 +115,18 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
 
   const updateAccount = useCallback(async () => {
     if (!lensUser) return;
+    setAccountLoading(true);
     const accountResult = await fetchAccount(lensClient, {
       address: lensUser.address,
     });
     if (accountResult.isErr()) {
       console.error("Error fetching account", accountResult.error);
-      setError(new Error("Error fetching account"));
-      return;
+      setAccount(null);
+      setError(new Error("Error getting account details"));
+    } else {
+      setAccount(accountResult.value);
     }
-    setAccount(accountResult.value);
+    setAccountLoading(false);
   }, [lensClient, lensUser]);
 
   const updateAccountsAvailable = useCallback(
@@ -151,9 +161,9 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   );
 
   useEffect(() => {
-    if (isLoading || account || !lensUser) return;
+    if (accountLoading || account || !lensUser) return;
     updateAccount();
-  }, [isLoading, lensUser, account, updateAccount]);
+  }, [accountLoading, lensUser, account, updateAccount]);
 
   useEffect(() => {
     updateAccountsAvailable(walletAddress).catch(e => {
@@ -161,10 +171,6 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
       setError(e);
     });
   }, [walletAddress, updateAccountsAvailable]);
-
-  useEffect(() => {
-    setIsLoading(isConnecting || loginLoading || sessionLoading || logoutLoading || userLoading);
-  }, [isConnecting, loginLoading, sessionLoading, logoutLoading, userLoading]);
 
   useEffect(() => {
     if (loginError) {
@@ -185,8 +191,6 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
   };
 
   const logIn = async (account: Account) => {
-    setIsLoading(true);
-
     if (sessionClient?.isSessionClient()) {
       const switchResult = await sessionClient.switchAccount({
         account: account.address,
@@ -207,7 +211,6 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
     if (!walletClient || !walletAddress) {
       console.error("No wallet available");
       setError(new Error("No wallet available"));
-      setIsLoading(false);
       return;
     }
 
@@ -256,7 +259,6 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
         setError(new Error("Login failed"));
       }
     } finally {
-      setIsLoading(false);
       // sleep for 5 seconds
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
@@ -275,10 +277,8 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
 
   const refresh = async () => {
     if (!walletAddress) return;
-    setIsLoading(true);
     await updateAccount();
     await updateAccountsAvailable();
-    setIsLoading(false);
   };
 
   return (
@@ -290,7 +290,12 @@ const LensSessionProvider: FC<LensSessionProviderProps> = ({ children }) => {
           account,
           accountsAvailable,
           client: sessionClient ?? lensClient,
-          isLoading,
+          isConnecting,
+          loginLoading,
+          logoutLoading,
+          sessionLoading,
+          lensUserLoading,
+          accountLoading,
           error,
           connectWallet,
           disconnectWallet,

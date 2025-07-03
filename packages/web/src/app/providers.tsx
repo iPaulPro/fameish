@@ -16,7 +16,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider>
+        <ConnectKitProvider mode="light">
           <LensProvider client={lensClient}>
             <LensSessionProvider>
               <SupabaseProvider>{children}</SupabaseProvider>
