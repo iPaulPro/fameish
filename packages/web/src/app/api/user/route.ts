@@ -245,7 +245,7 @@ export async function POST(req: Request) {
     console.log("POST /user : ✓ Following status verified");
 
     // create a new user record
-    const { data: insertData, error: insertError } = await createUser(supabase, accountAddress, verificationSource);
+    const { data: insertData, error: insertError } = await createUser(supabase, account, verificationSource);
 
     if (insertError) {
       console.error(`POST /user : insertError for ${accountAddress}`, insertError);

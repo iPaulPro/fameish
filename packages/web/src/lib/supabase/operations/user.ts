@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, TablesInsert } from "@/database.types";
 import { User } from "@/lib/supabase/tables";
 import { RecordResponse } from "@/operations/types/RecordResponse";
+import { Account } from "@lens-protocol/react";
 
 enum VerificationSource {
   ACCOUNT_SCORE,
@@ -21,13 +22,14 @@ const fetchUserByAccountAddress = async (
 
 const createUser = async (
   supabase: SupabaseClient<Database>,
-  accountAddress: string,
+  account: Account,
   verificationSource: VerificationSource,
 ): Promise<RecordResponse<User>> =>
   supabase
     .from("user")
     .insert({
-      account: accountAddress.toLowerCase(),
+      account: account.address.toLowerCase(),
+      account_owner: account.owner.toLowerCase(),
       verification_source: verificationSource,
     } satisfies TablesInsert<"user">)
     .select()
