@@ -12,12 +12,12 @@ import { NextResponse } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { lensReputationAbi } from "@/lib/abis/lensReputation";
 import { track } from "@vercel/analytics/server";
-import { createUser, fetchUserByAccountAddress, VerificationSource } from "@/operations/user";
+import { createUser, fetchUserByAccountAddress, fetchUserByOwnerAddress, VerificationSource } from "@/operations/user";
 
 const jwksUri = process.env.LENS_JWKS_URI!;
 const JWKS = createRemoteJWKSet(new URL(jwksUri));
 
-const unauthorizedResponse = Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
+const unauthorizedResponse = Response.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 export async function POST(req: Request) {
   let signer: string | null = null;
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
   const accountAddress = body.account as `0x${string}`;
   if (!accountAddress) {
-    return Response.json({ success: false, message: "Invalid account" }, { status: 400 });
+    return Response.json({ success: false, error: "Invalid account" }, { status: 400 });
   }
 
   if (accountAddress.toLowerCase() !== accountFromJwt.toLowerCase()) {
@@ -84,6 +84,14 @@ export async function POST(req: Request) {
 
   console.log("POST /user : ✓ JWT verified for ", accountAddress);
 
+  // Check if the user already exists
+  const { data: userByAccountAddress } = await fetchUserByAccountAddress(supabase, accountAddress);
+  if (userByAccountAddress) {
+    return Response.json({ success: false, error: "User already exists for Account address" }, { status: 409 });
+  }
+
+  console.log("POST /user : ✓ No user found for Account", accountAddress);
+
   let verificationSource: VerificationSource | null = null;
   try {
     // check that the account has a score above the threshold
@@ -92,12 +100,12 @@ export async function POST(req: Request) {
     });
     if (getAccountRes.isErr()) {
       console.error("POST /user : getAccountRes", getAccountRes.error);
-      return Response.json({ success: false, message: "Failed to fetch account" }, { status: 500 });
+      return Response.json({ success: false, error: "Failed to fetch account" }, { status: 500 });
     }
     const account = getAccountRes.value;
     if (!account) {
-      console.error("POST /user : account not found for", accountAddress);
-      return Response.json({ success: false, message: "Account not found" }, { status: 401 });
+      console.error("POST /user : Account not found for", accountAddress);
+      return Response.json({ success: false, error: "Account not found" }, { status: 401 });
     }
 
     // If the account score is below the threshold, check the Lens Reputation Score
@@ -132,7 +140,7 @@ export async function POST(req: Request) {
           "score:",
           lensRepScore.toString(),
         );
-        return Response.json({ success: false, message: "Scores are too low" }, { status: 401 });
+        return Response.json({ success: false, error: "Scores are too low" }, { status: 401 });
       } else if (account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_SECONDARY_ACCOUNT_SCORE!)) {
         console.log(
           "POST /user : ✕ Lens Reputation Score is high enough, but Account Score of",
@@ -140,11 +148,22 @@ export async function POST(req: Request) {
           "is too low for",
           accountAddress,
         );
-        return Response.json({ success: false, message: "Scores are too low" }, { status: 401 });
+        return Response.json({ success: false, error: "Account Score is too low" }, { status: 401 });
+      }
+
+      const { data: userByOwnerAddress } = await fetchUserByOwnerAddress(supabase, signer);
+      if (userByOwnerAddress) {
+        console.log(
+          "POST /user : ✕ Account owner",
+          signer,
+          "was already used for Lens Reputation Score verification",
+          accountAddress,
+        );
+        return Response.json({ success: false, error: "User already exists for wallet address" }, { status: 409 });
       }
 
       verificationSource = VerificationSource.LENS_REPUTATION;
-      console.log("POST /user : ✓ Lens Reputation Score verified for", accountAddress);
+      console.log("POST /user : ✓ Lens Reputation Score", lensRepScore, "verified for", accountAddress);
       await track("User Verified", {
         method: "Lens Reputation",
         account: accountAddress,
@@ -152,7 +171,7 @@ export async function POST(req: Request) {
       });
     } else {
       verificationSource = VerificationSource.ACCOUNT_SCORE;
-      console.log("POST /user : ✓ Account Score verified for", accountAddress);
+      console.log("POST /user : ✓ Account Score", account.score, "verified for", accountAddress);
       await track("User Verified", {
         method: "Account Score",
         account: accountAddress,
@@ -191,14 +210,6 @@ export async function POST(req: Request) {
 
     console.log("POST /user : ✓ Account managers verified for", accountAddress);
 
-    // Check if the user already exists
-    const { data: user } = await fetchUserByAccountAddress(supabase, accountAddress);
-    if (user) {
-      return Response.json({ success: false, message: "Account already exists" }, { status: 409 });
-    }
-
-    console.log("POST /user : ✓ New user verified for", accountAddress);
-
     const winnerAccount = await publicClient.readContract({
       address: process.env.NEXT_PUBLIC_FAMEISH_CONTRACT_ADDRESS! as `0x${string}`,
       abi: fameishAbi,
@@ -225,13 +236,13 @@ export async function POST(req: Request) {
 
     if (isFollowing[0].error || (winnerExists && isFollowing[1].error)) {
       console.error("POST /user : unable to get follow status for", accountAddress);
-      return Response.json({ success: false, message: "Unable to get follow status" }, { status: 500 });
+      return Response.json({ success: false, error: "Unable to get follow status" }, { status: 500 });
     }
 
     // Ensure the account is following the Fameish account
     if (!isFollowing[0].result) {
       console.error(`POST /user : ${accountAddress} not following Fameish account`);
-      return Response.json({ success: false, message: "Not following Fameish account" }, { status: 500 });
+      return Response.json({ success: false, error: "Not following Fameish account" }, { status: 500 });
     }
 
     // Ensure the account is following the winning account
@@ -247,23 +258,23 @@ export async function POST(req: Request) {
       } catch (e) {
         console.error(`POST /user : failed to follow winning account for ${accountAddress}`, e);
         return Response.json(
-          { success: false, message: `Failed to follow wining account for ${accountAddress}` },
+          { success: false, error: `Failed to follow wining account for ${accountAddress}` },
           { status: 500 },
         );
       }
     }
 
-    console.log("POST /user : ✓ Following status verified");
+    console.log("POST /user : ✓ Following status verified for", accountAddress);
 
     // create a new user record
     const { data: insertData, error: insertError } = await createUser(supabase, account, verificationSource);
 
     if (insertError) {
       console.error(`POST /user : insertError for ${accountAddress}`, insertError);
-      return Response.json({ success: false, message: "Failed to create user" }, { status: 500 });
+      return Response.json({ success: false, error: "Failed to create user" }, { status: 500 });
     }
 
-    console.log("POST /user : ✓ Created user", insertData?.id);
+    console.log("POST /user : ✓ Created user", insertData?.id, "for", accountAddress);
 
     return Response.json({ success: true, user: insertData });
   } catch (e) {

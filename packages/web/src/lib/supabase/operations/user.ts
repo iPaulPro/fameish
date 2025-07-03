@@ -20,6 +20,12 @@ const fetchUserByAccountAddress = async (
 ): Promise<RecordResponse<User | null>> =>
   supabase.from("user").select().ilike("account", accountAddress.toLowerCase()).maybeSingle();
 
+const fetchUserByOwnerAddress = async (
+  supabase: SupabaseClient<Database>,
+  ownerAddress: string,
+): Promise<RecordResponse<User | null>> =>
+  supabase.from("user").select().ilike("account_owner", ownerAddress.toLowerCase()).maybeSingle();
+
 const createUser = async (
   supabase: SupabaseClient<Database>,
   account: Account,
@@ -35,4 +41,4 @@ const createUser = async (
     .select()
     .single();
 
-export { fetchUserByAccountAddress, fetchUserById, createUser, VerificationSource };
+export { fetchUserByAccountAddress, fetchUserByOwnerAddress, fetchUserById, createUser, VerificationSource };

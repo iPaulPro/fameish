@@ -220,6 +220,11 @@ function LensAccountChooserMessage() {
         </a>{" "}
         Score over {process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!} to be eligible.
       </span>
+      <span className="text-xs opacity-50 pt-4 text-center">
+        Note: A Lens Score over{" "}
+        {new Intl.NumberFormat().format(Number(process.env.NEXT_PUBLIC_LENS_MIN_SECONDARY_ACCOUNT_SCORE!))} is required
+        when using Lens Reputation for verification.
+      </span>
     </>
   );
 }
@@ -408,6 +413,9 @@ function CreateUserSection({ accountAddress }: { accountAddress: EvmAddress }) {
       const data = await res.json();
       if (data.success) {
         router.push("/account");
+      } else {
+        console.error("createUser: Error creating user:", data.error);
+        setError(data.error || "Error creating user");
       }
     } catch (e) {
       console.error("createUser: Error creating user:", e);
