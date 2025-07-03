@@ -45,6 +45,7 @@ export async function POST(req: Request) {
     return unauthorizedResponse;
   }
 
+  // Verify the JWT token
   let accountFromJwt: string | null = null;
   try {
     const { payload } = await jwtVerify(token, JWKS);
@@ -99,6 +100,7 @@ export async function POST(req: Request) {
       return Response.json({ success: false, message: "Account not found" }, { status: 401 });
     }
 
+    // If the account score is below the threshold, check the Lens Reputation Score
     if (account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_ACCOUNT_SCORE!)) {
       console.log(
         "POST /user : ✕ Account Score",
@@ -120,6 +122,7 @@ export async function POST(req: Request) {
         console.error("POST /user : Error getting Lens Reputation Score", e);
       }
 
+      // If the Lens Rep Score is above the threshold the Account Score must also be above the secondary threshold
       if (lensRepScore < BigInt(process.env.NEXT_PUBLIC_MIN_LENS_REP_SCORE!)) {
         console.log(
           "POST /user : ✕ Lens Reputation Score",
@@ -128,6 +131,14 @@ export async function POST(req: Request) {
           accountAddress,
           "score:",
           lensRepScore.toString(),
+        );
+        return Response.json({ success: false, message: "Scores are too low" }, { status: 401 });
+      } else if (account.score < Number(process.env.NEXT_PUBLIC_LENS_MIN_SECONDARY_ACCOUNT_SCORE!)) {
+        console.log(
+          "POST /user : ✕ Lens Reputation Score is high enough, but Account Score of",
+          account.score,
+          "is too low for",
+          accountAddress,
         );
         return Response.json({ success: false, message: "Scores are too low" }, { status: 401 });
       }
