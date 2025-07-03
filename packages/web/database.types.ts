@@ -59,6 +59,7 @@ export type Database = {
       user: {
         Row: {
           account: string
+          account_owner: string
           created_at: string
           eligible: boolean
           id: number
@@ -67,6 +68,7 @@ export type Database = {
         }
         Insert: {
           account: string
+          account_owner?: string
           created_at?: string
           eligible?: boolean
           id?: number
@@ -75,6 +77,7 @@ export type Database = {
         }
         Update: {
           account?: string
+          account_owner?: string
           created_at?: string
           eligible?: boolean
           id?: number
