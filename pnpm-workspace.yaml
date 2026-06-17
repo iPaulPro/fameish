@@ -1,2 +1,14 @@
 packages:
-  - 'packages/*'
+  - packages/*
+ignoredBuiltDependencies:
+  - bufferutil
+  - cpu-features
+  - keccak
+  - protobufjs
+  - secp256k1
+  - sharp
+  - ssh2
+  - unrs-resolver
+  - utf-8-validate
+onlyBuiltDependencies:
+  - supabase
